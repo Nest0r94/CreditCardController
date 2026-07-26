@@ -20,7 +20,7 @@ fun BottomNavigationBar(currentRoute: String, onNavigate: (String) -> Unit) {
         NavigationItem("Inicio", Icons.Default.Home, "inicio"),
         NavigationItem("Tarjetas", Icons.Default.CreditCard, "tarjetas"),
         NavigationItem("Nuevo", Icons.Default.Add, "nuevo"),
-        NavigationItem("Estadísticas", Icons.Default.BarChart, "estadisticas"),
+        NavigationItem("Datos", Icons.Default.BarChart, "estadisticas"),
         NavigationItem("Promos", Icons.Default.LocalOffer, "promos"),
         NavigationItem("Ajustes", Icons.Default.Settings, "ajustes"),
     )

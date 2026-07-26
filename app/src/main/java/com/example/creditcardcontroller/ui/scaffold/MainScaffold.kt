@@ -11,7 +11,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.creditcardcontroller.ui.screens.HomeScreen
+import com.example.creditcardcontroller.ui.screens.home.HomeScreen
+import com.example.creditcardcontroller.ui.screens.cards.CardsScreen
+import com.example.creditcardcontroller.ui.screens.new_movement.NewMovementScreen
+import com.example.creditcardcontroller.ui.screens.stats.StatsScreen
+import com.example.creditcardcontroller.ui.screens.promos.PromosScreen
+import com.example.creditcardcontroller.ui.screens.settings.SettingsScreen
 
 @Composable
 fun MainScaffold() {
@@ -38,10 +43,12 @@ fun MainScaffold() {
         val modifier = Modifier.padding(innerPadding)
         when (currentRoute) {
             "inicio" -> HomeScreen(modifier = modifier)
-            else -> Text(
-                text = "Pantalla de ${currentRoute.replaceFirstChar { it.uppercase() }}",
-                modifier = modifier.padding(24.dp)
-            )
+            "tarjetas" -> CardsScreen(modifier = modifier)
+            "nuevo" -> NewMovementScreen(modifier = modifier)
+            "estadisticas" -> StatsScreen(modifier = modifier)
+            "promos" -> PromosScreen(modifier = modifier)
+            "ajustes" -> SettingsScreen(modifier = modifier)
+            else -> HomeScreen(modifier = modifier)
         }
     }
 }

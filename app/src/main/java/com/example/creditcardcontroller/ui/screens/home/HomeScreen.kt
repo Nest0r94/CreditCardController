@@ -1,4 +1,4 @@
-package com.example.creditcardcontroller.ui.screens
+package com.example.creditcardcontroller.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
