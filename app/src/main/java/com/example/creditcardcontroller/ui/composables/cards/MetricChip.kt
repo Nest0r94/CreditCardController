@@ -1,7 +1,10 @@
 package com.example.creditcardcontroller.ui.composables.cards
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,7 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
 @Composable
 fun MetricChip(
@@ -40,6 +45,33 @@ fun MetricChip(
                 style = MaterialTheme.typography.titleMedium,
                 color = color,
                 fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MetricChipPreview() {
+    val colors = MaterialTheme.colorScheme
+    CreditCardControllerTheme {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            MetricChip(
+                modifier = Modifier.weight(1f),
+                title = "Ingresos",
+                value = "+$2.150",
+                color = colors.secondary
+            )
+            MetricChip(
+                modifier = Modifier.weight(1f),
+                title = "Gastos",
+                value = "-$890",
+                color = colors.tertiary
             )
         }
     }

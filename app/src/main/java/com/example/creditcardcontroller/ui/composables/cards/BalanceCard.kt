@@ -13,7 +13,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
 @Composable
 fun BalanceCard(balance: String, change: String) {
@@ -45,6 +47,16 @@ fun BalanceCard(balance: String, change: String) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.secondary
             )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun BalanceCardPreview() {
+    CreditCardControllerTheme {
+        Column(modifier = Modifier.padding(16.dp)) {
+            BalanceCard(balance = "$12.450,80", change = "+8,4% respecto al mes pasado")
         }
     }
 }

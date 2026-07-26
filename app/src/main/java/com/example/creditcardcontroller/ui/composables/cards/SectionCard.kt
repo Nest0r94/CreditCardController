@@ -13,7 +13,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
 @Composable
 fun SectionCard(title: String, content: @Composable () -> Unit) {
@@ -35,6 +37,21 @@ fun SectionCard(title: String, content: @Composable () -> Unit) {
             )
             Spacer(modifier = Modifier.height(12.dp))
             content()
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SectionCardPreview() {
+    CreditCardControllerTheme {
+        Column(modifier = Modifier.padding(16.dp)) {
+            SectionCard(title = "Título de la Sección") {
+                Text(
+                    text = "Contenido de ejemplo dentro de la card",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }

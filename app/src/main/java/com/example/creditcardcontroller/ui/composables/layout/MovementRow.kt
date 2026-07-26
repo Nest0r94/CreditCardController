@@ -10,7 +10,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
 @Composable
 fun MovementRow(label: String, value: String) {
@@ -26,5 +28,15 @@ fun MovementRow(label: String, value: String) {
             Text(text = value, color = colors.onSurface)
         }
         HorizontalDivider(color = colors.outlineVariant)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MovementRowPreview() {
+    CreditCardControllerTheme {
+        Column(modifier = Modifier.padding(16.dp)) {
+            MovementRow(label = "Pago de tarjeta", value = "$320")
+        }
     }
 }

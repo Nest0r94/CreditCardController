@@ -18,7 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.creditcardcontroller.ui.composables.actions.ActionButtonRow
+import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
+import com.example.creditcardcontroller.ui.composables.actions.SecondaryButton
 import com.example.creditcardcontroller.ui.composables.cards.BalanceCard
 import com.example.creditcardcontroller.ui.composables.cards.MetricChip
 import com.example.creditcardcontroller.ui.composables.cards.SectionCard
@@ -59,12 +60,21 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
             BalanceCard(balance = "$12.450,80", change = "+8,4% respecto al mes pasado")
 
-            ActionButtonRow(
-                primaryLabel = "Transferir",
-                secondaryLabel = "Guardar",
-                onPrimaryClick = { },
-                onSecondaryClick = { }
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                PrimaryButton(
+                    text = "Transferir",
+                    onClick = { },
+                    modifier = Modifier.weight(1f)
+                )
+                SecondaryButton(
+                    text = "Guardar",
+                    onClick = { },
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
