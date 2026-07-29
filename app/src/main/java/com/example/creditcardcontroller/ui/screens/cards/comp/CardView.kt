@@ -43,7 +43,8 @@ fun CardView(
     closingDate: String,
     dueDate: String,
     cardExpiration: String,
-    usagePercentage: Float
+    usagePercentage: Float,
+    onClick: () -> Unit = {}
 ) {
     val gradient = Brush.linearGradient(
         colors = listOf(
@@ -54,6 +55,7 @@ fun CardView(
     )
 
     Card(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(240.dp),

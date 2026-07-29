@@ -18,9 +18,12 @@ import com.example.creditcardcontroller.ui.screens.stats.StatsScreen
 import com.example.creditcardcontroller.ui.screens.promos.PromosScreen
 import com.example.creditcardcontroller.ui.screens.settings.SettingsScreen
 
+import com.example.creditcardcontroller.ui.screens.editcard.EditCardScreen
+
 @Composable
 fun MainScaffold() {
     var currentRoute by remember { mutableStateOf("inicio") }
+    var isEditMode by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -32,18 +35,41 @@ fun MainScaffold() {
                 "estadisticas" -> "Estadísticas"
                 "promos" -> "Promociones"
                 "ajustes" -> "Ajustes"
+                "editar_tarjeta" -> if (isEditMode) "Editar Tarjeta" else "Agregar Tarjeta"
                 else -> "Credit Card Controller"
             }
-            Toolbar(title = title)
+            
+            val onBack: (() -> Unit)? = if (currentRoute == "editar_tarjeta") {
+                { currentRoute = "tarjetas" }
+            } else null
+
+            Toolbar(title = title, onBack = onBack)
         },
         bottomBar = {
-            BottomNavigationBar(currentRoute = currentRoute, onNavigate = { currentRoute = it })
+            if (currentRoute != "editar_tarjeta") {
+                BottomNavigationBar(currentRoute = currentRoute, onNavigate = { currentRoute = it })
+            }
         }
     ) { innerPadding ->
         val modifier = Modifier.padding(innerPadding)
         when (currentRoute) {
             "inicio" -> HomeScreen(modifier = modifier)
-            "tarjetas" -> CardsScreen(modifier = modifier)
+            "tarjetas" -> CardsScreen(
+                modifier = modifier,
+                onEditCard = {
+                    isEditMode = true
+                    currentRoute = "editar_tarjeta"
+                },
+                onAddCard = {
+                    isEditMode = false
+                    currentRoute = "editar_tarjeta"
+                }
+            )
+            "editar_tarjeta" -> EditCardScreen(
+                modifier = modifier,
+                isEditMode = isEditMode,
+                onBack = { currentRoute = "tarjetas" }
+            )
             "nuevo" -> NewMovementScreen(modifier = modifier)
             "estadisticas" -> StatsScreen(modifier = modifier)
             "promos" -> PromosScreen(modifier = modifier)

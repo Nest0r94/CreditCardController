@@ -18,7 +18,11 @@ import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.screens.cards.comp.CardView
 
 @Composable
-fun CardsScreen(modifier: Modifier = Modifier) {
+fun CardsScreen(
+    modifier: Modifier = Modifier,
+    onEditCard: () -> Unit,
+    onAddCard: () -> Unit
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -37,7 +41,8 @@ fun CardsScreen(modifier: Modifier = Modifier) {
                 closingDate = "15 Oct",
                 dueDate = "02 Nov",
                 cardExpiration = "12/28",
-                usagePercentage = 0.248f
+                usagePercentage = 0.248f,
+                onClick = onEditCard
             )
 
             CardView(
@@ -47,7 +52,8 @@ fun CardsScreen(modifier: Modifier = Modifier) {
                 closingDate = "20 Oct",
                 dueDate = "05 Nov",
                 cardExpiration = "06/30",
-                usagePercentage = 0.45f
+                usagePercentage = 0.45f,
+                onClick = onEditCard
             )
 
             CardView(
@@ -57,7 +63,8 @@ fun CardsScreen(modifier: Modifier = Modifier) {
                 closingDate = "10 Oct",
                 dueDate = "25 Oct",
                 cardExpiration = "03/27",
-                usagePercentage = 0.283f
+                usagePercentage = 0.283f,
+                onClick = onEditCard
             )
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -67,7 +74,7 @@ fun CardsScreen(modifier: Modifier = Modifier) {
 
         PrimaryButton(
             text = "Agregar Tarjeta",
-            onClick = { /* TODO */ },
+            onClick = onAddCard,
             modifier = Modifier.fillMaxWidth(),
             icon = Icons.Default.Add
         )
