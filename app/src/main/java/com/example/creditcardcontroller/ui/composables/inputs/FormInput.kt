@@ -34,7 +34,8 @@ fun FormInput(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     trailingIcon: ImageVector? = null,
-    placeholder: String = ""
+    placeholder: String = "",
+    uppercaseLabel: Boolean = true
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -48,7 +49,7 @@ fun FormInput(
                 Spacer(modifier = Modifier.width(8.dp))
             }
             Text(
-                text = label.uppercase(),
+                text = if (uppercaseLabel) label.uppercase() else label,
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
