@@ -27,20 +27,7 @@ fun SettingItemGoto(
     SettingItemBase(
         icon = icon?.let {
             {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = it,
-                        contentDescription = null,
-                        tint = iconColor,
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
+                IconBox(icon = it, color = iconColor)
             }
         },
         title = title,

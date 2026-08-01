@@ -22,7 +22,10 @@ import com.example.creditcardcontroller.ui.composables.settings.SettingItemBase
 import com.example.creditcardcontroller.ui.composables.settings.SettingItemGoto
 
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    modifier: Modifier = Modifier,
+    onNavigate: (String) -> Unit = {}
+) {
     val context = LocalContext.current
     val onNotImplemented = {
         Toast.makeText(context, "NO IMPLEMENTADO", Toast.LENGTH_SHORT).show()
@@ -41,21 +44,21 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 iconColor = Color(0xFF64B5F6),
                 title = "Notificaciones",
                 subtitle = "Configura tus alertas y avisos",
-                onClick = onNotImplemented
+                onClick = { onNavigate("ajustes_notificaciones") }
             )
             SettingItemGoto(
                 icon = Icons.Default.Security,
                 iconColor = Color(0xFF4DB6AC),
                 title = "Permisos",
                 subtitle = "Administra los accesos de la aplicación",
-                onClick = onNotImplemented
+                onClick = { onNavigate("ajustes_permisos") }
             )
             SettingItemGoto(
                 icon = Icons.Default.Settings,
                 iconColor = Color(0xFFE57373),
                 title = "Preferencias de la App",
                 subtitle = "Idioma, tema y notificaciones push",
-                onClick = onNotImplemented
+                onClick = { onNavigate("ajustes_preferencias") }
             )
         }
 
