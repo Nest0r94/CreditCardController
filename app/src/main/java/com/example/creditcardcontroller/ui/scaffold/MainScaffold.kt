@@ -19,13 +19,15 @@ import com.example.creditcardcontroller.ui.screens.settings.NotificationsSetting
 import com.example.creditcardcontroller.ui.screens.settings.PermissionsSettingsScreen
 import com.example.creditcardcontroller.ui.screens.settings.AppPreferencesScreen
 import com.example.creditcardcontroller.ui.screens.editcard.EditCardScreen
+import com.example.creditcardcontroller.ui.screens.editoffer.EditOfferScreen
 
 @Composable
 fun MainScaffold() {
     var currentRoute by remember { mutableStateOf("inicio") }
     var isEditMode by remember { mutableStateOf(false) }
+    var isPromoEditMode by remember { mutableStateOf(false) }
 
-    val isSubScreen = currentRoute in listOf("editar_tarjeta", "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias")
+    val isSubScreen = currentRoute in listOf("editar_tarjeta", "editar_oferta", "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias")
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -39,11 +41,13 @@ fun MainScaffold() {
                 "ajustes" -> "Ajustes"
                 "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias" -> "Configuración"
                 "editar_tarjeta" -> if (isEditMode) "Editar Tarjeta" else "Agregar Tarjeta"
+                "editar_oferta" -> if (isPromoEditMode) "Editar Oferta" else "Agregar Oferta"
                 else -> "Credit Card Controller"
             }
             
             val onBack: (() -> Unit)? = when (currentRoute) {
                 "editar_tarjeta" -> { { currentRoute = "tarjetas" } }
+                "editar_oferta" -> { { currentRoute = "promos" } }
                 "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias" -> { { currentRoute = "ajustes" } }
                 else -> null
             }
@@ -77,7 +81,22 @@ fun MainScaffold() {
             )
             "nuevo" -> NewMovementScreen(modifier = modifier)
             "estadisticas" -> StatsScreen(modifier = modifier)
-            "promos" -> PromosScreen(modifier = modifier)
+            "promos" -> PromosScreen(
+                modifier = modifier,
+                onAddPromo = {
+                    isPromoEditMode = false
+                    currentRoute = "editar_oferta"
+                },
+                onEditPromo = {
+                    isPromoEditMode = true
+                    currentRoute = "editar_oferta"
+                }
+            )
+            "editar_oferta" -> EditOfferScreen(
+                modifier = modifier,
+                isEditMode = isPromoEditMode,
+                onBack = { currentRoute = "promos" }
+            )
             "ajustes" -> SettingsScreen(
                 modifier = modifier,
                 onNavigate = { currentRoute = it }

@@ -20,10 +20,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
 @Composable
-fun PromosScreen(modifier: Modifier = Modifier) {
+fun PromosScreen(
+    modifier: Modifier = Modifier,
+    onAddPromo: () -> Unit = {},
+    onEditPromo: (PromoData) -> Unit = {}
+) {
     var searchQuery by remember { mutableStateOf("") }
 
     Column(
@@ -76,6 +81,7 @@ fun PromosScreen(modifier: Modifier = Modifier) {
         )
 
         LazyColumn(
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
@@ -91,7 +97,7 @@ fun PromosScreen(modifier: Modifier = Modifier) {
             }
 
             items(promosDelDia) { promo ->
-                PromoCard(promo)
+                PromoCard(promo, onClick = { onEditPromo(promo) })
             }
 
             item {
@@ -107,17 +113,29 @@ fun PromosScreen(modifier: Modifier = Modifier) {
             }
 
             items(otrasPromos) { promo ->
-                PromoCard(promo)
+                PromoCard(promo, onClick = { onEditPromo(promo) })
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        PrimaryButton(
+            text = "Agregar Promoción",
+            onClick = onAddPromo,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            icon = Icons.Default.Add
+        )
     }
 }
 
 @Composable
-fun PromoCard(promo: PromoData) {
+fun PromoCard(promo: PromoData, onClick: () -> Unit = {}) {
     val colors = MaterialTheme.colorScheme
     
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
