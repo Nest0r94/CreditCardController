@@ -1,0 +1,9 @@
+package com.example.creditcardcontroller.data.local
+
+enum class Frecuencia {
+    DIARIA, SEMANAL, MENSUAL, ANUAL
+}
+
+enum class TipoDescuento {
+    EN_PAGO, REINTEGRO_TARJETA, REINTEGRO_CUENTA
+}
