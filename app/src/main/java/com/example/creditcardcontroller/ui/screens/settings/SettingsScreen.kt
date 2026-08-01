@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.creditcardcontroller.ui.composables.settings.SettingGroup
+import com.example.creditcardcontroller.ui.composables.settings.SettingItemBase
 import com.example.creditcardcontroller.ui.composables.settings.SettingItemGoto
 
 @Composable
