@@ -82,7 +82,10 @@ fun MainScaffold() {
                 tarjetaId = editingTarjetaId,
                 onBack = { currentRoute = "tarjetas" }
             )
-            "nuevo" -> NewMovementScreen(modifier = modifier)
+            "nuevo" -> NewMovementScreen(
+                modifier = modifier,
+                onBack = { currentRoute = "inicio" }
+            )
             "estadisticas" -> StatsScreen(modifier = modifier)
             "promos" -> PromosScreen(
                 modifier = modifier,
