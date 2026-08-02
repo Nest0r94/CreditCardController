@@ -25,6 +25,7 @@ import com.example.creditcardcontroller.ui.screens.editoffer.EditOfferScreen
 fun MainScaffold() {
     var currentRoute by remember { mutableStateOf("inicio") }
     var isEditMode by remember { mutableStateOf(false) }
+    var editingTarjetaId by remember { mutableStateOf<Long?>(null) }
     var isPromoEditMode by remember { mutableStateOf(false) }
 
     val isSubScreen = currentRoute in listOf("editar_tarjeta", "editar_oferta", "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias")
@@ -65,18 +66,20 @@ fun MainScaffold() {
             "inicio" -> HomeScreen(modifier = modifier)
             "tarjetas" -> CardsScreen(
                 modifier = modifier,
-                onEditCard = {
+                onEditCard = { tarjetaId ->
                     isEditMode = true
+                    editingTarjetaId = tarjetaId
                     currentRoute = "editar_tarjeta"
                 },
                 onAddCard = {
                     isEditMode = false
+                    editingTarjetaId = null
                     currentRoute = "editar_tarjeta"
                 }
             )
             "editar_tarjeta" -> EditCardScreen(
                 modifier = modifier,
-                isEditMode = isEditMode,
+                tarjetaId = editingTarjetaId,
                 onBack = { currentRoute = "tarjetas" }
             )
             "nuevo" -> NewMovementScreen(modifier = modifier)

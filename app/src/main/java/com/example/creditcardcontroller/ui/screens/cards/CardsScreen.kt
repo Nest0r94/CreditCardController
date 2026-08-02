@@ -11,18 +11,36 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.creditcardcontroller.data.local.AppDatabase
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.screens.cards.comp.CardView
+import java.text.NumberFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun CardsScreen(
     modifier: Modifier = Modifier,
-    onEditCard: () -> Unit,
+    onEditCard: (Long) -> Unit,
     onAddCard: () -> Unit
 ) {
+    val context = LocalContext.current
+    val tarjetaDao = remember { AppDatabase.getDatabase(context).tarjetaDao() }
+    val tarjetas by tarjetaDao.getAllTarjetas().collectAsState(initial = emptyList())
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -34,40 +52,33 @@ fun CardsScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            CardView(
-                cardName = "Visa Principal",
-                amount = "$1,240.00",
-                limit = "$5,000",
-                closingDate = "15 Oct",
-                dueDate = "02 Nov",
-                cardExpiration = "12/28",
-                usagePercentage = 0.248f,
-                onClick = onEditCard
-            )
+            if (tarjetas.isEmpty()) {
+                Text(
+                    text = "No tenés tarjetas agregadas todavía.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 32.dp)
+                )
+            } else {
+                tarjetas.forEach { tarjeta ->
+                    CardView(
+                        cardName = tarjeta.nombre,
+                        amount = "$0,00",
+                        limit = formatCurrency(tarjeta.limiteMensual),
+                        closingDate = formatClosingDate(tarjeta.fechaCierreResumen),
+                        dueDate = formatDueDate(tarjeta.fechaVencimientoResumen),
+                        cardExpiration = formatExpiration(tarjeta.vencimientoTarjeta),
+                        usagePercentage = 0f,
+                        onClick = { onEditCard(tarjeta.id) }
+                    )
+                }
 
-            CardView(
-                cardName = "Mastercard Black",
-                amount = "$4,500.00",
-                limit = "$10,000",
-                closingDate = "20 Oct",
-                dueDate = "05 Nov",
-                cardExpiration = "06/30",
-                usagePercentage = 0.45f,
-                onClick = onEditCard
-            )
-
-            CardView(
-                cardName = "Amex Gold",
-                amount = "$850.00",
-                limit = "$3,000",
-                closingDate = "10 Oct",
-                dueDate = "25 Oct",
-                cardExpiration = "03/27",
-                usagePercentage = 0.283f,
-                onClick = onEditCard
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -79,4 +90,33 @@ fun CardsScreen(
             icon = Icons.Default.Add
         )
     }
+}
+
+private fun formatCurrency(value: Double): String {
+    val formatter = NumberFormat.getIntegerInstance(Locale.US)
+    return "$${formatter.format(value)}"
+}
+
+private fun formatClosingDate(millis: Long): String {
+    val formatter = DateTimeFormatter.ofPattern("dd MMM", Locale("es"))
+    return Instant.ofEpochMilli(millis)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+        .format(formatter)
+}
+
+private fun formatDueDate(millis: Long): String {
+    val formatter = DateTimeFormatter.ofPattern("dd MMM", Locale("es"))
+    return Instant.ofEpochMilli(millis)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+        .format(formatter)
+}
+
+private fun formatExpiration(millis: Long): String {
+    val formatter = DateTimeFormatter.ofPattern("MM/yy", Locale("es"))
+    return Instant.ofEpochMilli(millis)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+        .format(formatter)
 }

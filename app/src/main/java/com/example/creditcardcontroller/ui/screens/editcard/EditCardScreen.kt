@@ -10,43 +10,107 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.creditcardcontroller.data.local.AppDatabase
+import com.example.creditcardcontroller.data.local.TarjetaEntity
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.composables.cards.CardStatusPreview
 import com.example.creditcardcontroller.ui.composables.inputs.FormInput
+import com.example.creditcardcontroller.ui.composables.inputs.OfferDateField
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun EditCardScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    isEditMode: Boolean = true
+    tarjetaId: Long? = null
 ) {
-    var cardName by remember { mutableStateOf(if (isEditMode) "Platinum Premium" else "") }
-    var monthlyLimit by remember { mutableStateOf(if (isEditMode) "$ 1500000" else "") }
-    var installmentsLimit by remember { mutableStateOf(if (isEditMode) "$ 850000" else "") }
-    var closingDate by remember { mutableStateOf(if (isEditMode) "25/12/2023" else "") }
-    var dueDate by remember { mutableStateOf(if (isEditMode) "05/01/2024" else "") }
-    var cardExpiration by remember { mutableStateOf(if (isEditMode) "noviembre de 2028" else "") }
+    val isEditMode = tarjetaId != null
+    val context = LocalContext.current
+    val tarjetaDao = remember { AppDatabase.getDatabase(context).tarjetaDao() }
+    val scope = rememberCoroutineScope()
+
+    var cardName by remember { mutableStateOf("") }
+    var monthlyLimit by remember { mutableStateOf("") }
+    var installmentsLimit by remember { mutableStateOf("") }
+    var closingDate by remember { mutableStateOf<Long?>(null) }
+    var dueDate by remember { mutableStateOf<Long?>(null) }
+    var cardExpiration by remember { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(tarjetaId) {
+        if (tarjetaId != null) {
+            tarjetaDao.getById(tarjetaId)?.let { tarjeta ->
+                cardName = tarjeta.nombre
+                monthlyLimit = formatAmount(tarjeta.limiteMensual)
+                installmentsLimit = formatAmount(tarjeta.limiteCuotas)
+                closingDate = tarjeta.fechaCierreResumen
+                dueDate = tarjeta.fechaVencimientoResumen
+                cardExpiration = tarjeta.vencimientoTarjeta
+            }
+        }
+    }
+
+    fun save() {
+        val nombre = cardName.trim()
+        if (nombre.isEmpty()) return
+
+        val limiteMensual = parseAmount(monthlyLimit)
+        val limiteCuotas = parseAmount(installmentsLimit)
+        val fechaCierre = closingDate ?: 0L
+        val fechaVencimiento = dueDate ?: 0L
+        val vencimientoTarjeta = cardExpiration ?: 0L
+
+        scope.launch {
+            if (tarjetaId == null) {
+                tarjetaDao.insert(
+                    TarjetaEntity(
+                        nombre = nombre,
+                        limiteMensual = limiteMensual,
+                        limiteCuotas = limiteCuotas,
+                        fechaCierreResumen = fechaCierre,
+                        fechaVencimientoResumen = fechaVencimiento,
+                        vencimientoTarjeta = vencimientoTarjeta
+                    )
+                )
+            } else {
+                tarjetaDao.getById(tarjetaId)?.let { existing ->
+                    tarjetaDao.update(
+                        existing.copy(
+                            nombre = nombre,
+                            limiteMensual = limiteMensual,
+                            limiteCuotas = limiteCuotas,
+                            fechaCierreResumen = fechaCierre,
+                            fechaVencimientoResumen = fechaVencimiento,
+                            vencimientoTarjeta = vencimientoTarjeta
+                        )
+                    )
+                }
+            }
+            onBack()
+        }
+    }
 
     Scaffold(
         bottomBar = {
             PrimaryButton(
                 text = if (isEditMode) "Guardar Cambios" else "Agregar Tarjeta",
-                onClick = { /* TODO: Guardar lógica */ onBack() },
+                onClick = { save() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
@@ -91,33 +155,44 @@ fun EditCardScreen(
                 icon = Icons.Default.Payments
             )
 
-            FormInput(
+            OfferDateField(
                 label = "Fecha de cierre",
-                value = closingDate,
-                onValueChange = { closingDate = it },
-                icon = Icons.Default.CalendarToday,
-                trailingIcon = Icons.Default.CalendarToday
+                selectedDateMillis = closingDate,
+                onDateSelected = { closingDate = it }
             )
 
-            FormInput(
+            OfferDateField(
                 label = "Fecha de vencimiento",
-                value = dueDate,
-                onValueChange = { dueDate = it },
-                icon = Icons.Default.CalendarToday,
-                trailingIcon = Icons.Default.CalendarToday
+                selectedDateMillis = dueDate,
+                onDateSelected = { dueDate = it }
             )
 
-            FormInput(
-                label = "Fecha de vencimiento de tarjeta (MM/AA)",
-                value = cardExpiration,
-                onValueChange = { cardExpiration = it },
-                icon = Icons.Default.CalendarToday,
-                trailingIcon = Icons.Default.CalendarToday
+            OfferDateField(
+                label = "Fecha de vencimiento de tarjeta",
+                selectedDateMillis = cardExpiration,
+                onDateSelected = { cardExpiration = it }
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
+}
+
+private fun formatAmount(value: Double): String {
+    return if (value == value.toLong().toDouble()) {
+        value.toLong().toString()
+    } else {
+        value.toString()
+    }
+}
+
+private fun parseAmount(value: String): Double {
+    var cleaned = value.replace("$", "").replace(" ", "").replace(",", "")
+    val lastDot = cleaned.lastIndexOf('.')
+    if (lastDot > 0 && cleaned.length - lastDot - 1 == 3 && cleaned.indexOf('.') == lastDot) {
+        cleaned = cleaned.replace(".", "")
+    }
+    return cleaned.toDoubleOrNull() ?: 0.0
 }
 
 @Preview(showBackground = true)
