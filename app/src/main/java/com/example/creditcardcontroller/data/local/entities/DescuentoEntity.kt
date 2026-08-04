@@ -1,7 +1,9 @@
-package com.example.creditcardcontroller.data.local
+package com.example.creditcardcontroller.data.local.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.creditcardcontroller.data.local.Frecuencia
+import com.example.creditcardcontroller.data.local.TipoDescuento
 
 @Entity(tableName = "descuentos")
 data class DescuentoEntity(

@@ -1,6 +1,7 @@
-package com.example.creditcardcontroller.data.local
+package com.example.creditcardcontroller.data.local.dao
 
 import androidx.room.*
+import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

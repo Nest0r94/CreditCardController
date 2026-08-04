@@ -26,9 +26,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.creditcardcontroller.data.local.AppDatabase
-import com.example.creditcardcontroller.data.local.MovimientoEntity
-import com.example.creditcardcontroller.data.local.TarjetaEntity
-import com.example.creditcardcontroller.data.local.DescuentoEntity
+import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
+import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
+import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import kotlinx.coroutines.launch
 import java.time.Instant
