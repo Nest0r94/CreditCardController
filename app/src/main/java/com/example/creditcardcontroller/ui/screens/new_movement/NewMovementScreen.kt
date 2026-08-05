@@ -99,7 +99,7 @@ fun NewMovementScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF0F172A))
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -113,23 +113,27 @@ fun NewMovementScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", tint = Color.White)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack, 
+                    contentDescription = "Regresar", 
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
             }
             Text(
                 text = "Añadir Gasto",
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
             Surface(
                 modifier = Modifier.size(40.dp),
                 shape = CircleShape,
-                color = Color(0xFF1E293B)
+                color = MaterialTheme.colorScheme.surfaceVariant
             ) {
                 Icon(
                     Icons.Default.Person,
                     contentDescription = null,
-                    tint = Color.Gray,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(8.dp)
                 )
             }
@@ -137,7 +141,7 @@ fun NewMovementScreen(
 
         Text(
             text = "VALOR DEL GASTO",
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold
         )
@@ -148,7 +152,7 @@ fun NewMovementScreen(
         ) {
             Text(
                 text = "$",
-                color = Color(0xFF6366F1),
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 48.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -161,7 +165,7 @@ fun NewMovementScreen(
                     }
                 },
                 textStyle = TextStyle(
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 48.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Start
@@ -173,7 +177,7 @@ fun NewMovementScreen(
                         Text(
                             text = "0.00",
                             style = TextStyle(
-                                color = Color.DarkGray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                                 fontSize = 48.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -185,7 +189,7 @@ fun NewMovementScreen(
         }
 
         Surface(
-            color = Color(0xFF1E293B),
+            color = MaterialTheme.colorScheme.secondaryContainer,
             shape = RoundedCornerShape(20.dp),
             modifier = Modifier.padding(bottom = 32.dp)
         ) {
@@ -196,13 +200,13 @@ fun NewMovementScreen(
                 Icon(
                     Icons.Default.LocalOffer,
                     contentDescription = null,
-                    tint = Color(0xFF2DD4BF),
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Ahorro Estimado: $450.00 (Promo Visa)",
-                    color = Color(0xFF2DD4BF),
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -211,7 +215,12 @@ fun NewMovementScreen(
 
         // Categoría Section
         SectionHeader(title = "Categoría", trailing = {
-            Text("VER TODAS", color = Color(0xFF6366F1), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+            Text(
+                text = "VER TODAS", 
+                color = MaterialTheme.colorScheme.primary, 
+                style = MaterialTheme.typography.labelSmall, 
+                fontWeight = FontWeight.Bold
+            )
         })
         
         Row(
@@ -234,7 +243,12 @@ fun NewMovementScreen(
 
         Row(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("TARJETA", color = Color.Gray, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "TARJETA", 
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                    style = MaterialTheme.typography.labelSmall, 
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 Box {
                     CustomDropdownSelector(
@@ -246,11 +260,11 @@ fun NewMovementScreen(
                     DropdownMenu(
                         expanded = showTarjetaDropdown,
                         onDismissRequest = { showTarjetaDropdown = false },
-                        modifier = Modifier.background(Color(0xFF1E293B))
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         tarjetas.forEach { tarjeta ->
                             DropdownMenuItem(
-                                text = { Text(tarjeta.nombre, color = Color.White) },
+                                text = { Text(tarjeta.nombre, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                                 onClick = {
                                     selectedTarjeta = tarjeta
                                     showTarjetaDropdown = false
@@ -262,7 +276,12 @@ fun NewMovementScreen(
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("FECHA", color = Color.Gray, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "FECHA", 
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                    style = MaterialTheme.typography.labelSmall, 
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 CustomDropdownSelector(
                     text = if (selectedDate == LocalDate.now()) "Hoy" else selectedDate.format(DateTimeFormatter.ofPattern("dd MMM")),
@@ -275,7 +294,13 @@ fun NewMovementScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("APLICAR DESCUENTO", color = Color.Gray, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Text(
+            text = "APLICAR DESCUENTO", 
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+            style = MaterialTheme.typography.labelSmall, 
+            fontWeight = FontWeight.Bold, 
+            modifier = Modifier.align(Alignment.Start)
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Box(modifier = Modifier.fillMaxWidth()) {
             CustomDropdownSelector(
@@ -288,11 +313,11 @@ fun NewMovementScreen(
             DropdownMenu(
                 expanded = showDescuentoDropdown,
                 onDismissRequest = { showDescuentoDropdown = false },
-                modifier = Modifier.fillMaxWidth().background(Color(0xFF1E293B))
+                modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 descuentos.forEach { descuento ->
                     DropdownMenuItem(
-                        text = { Text(descuento.nombre, color = Color.White) },
+                        text = { Text(descuento.nombre, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         onClick = {
                             selectedDescuento = descuento
                             showDescuentoDropdown = false
@@ -301,7 +326,7 @@ fun NewMovementScreen(
                 }
                 if (descuentos.isEmpty()) {
                     DropdownMenuItem(
-                        text = { Text("No hay promociones disponibles", color = Color.Gray) },
+                        text = { Text("No hay promociones disponibles", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
                         onClick = { showDescuentoDropdown = false }
                     )
                 }
@@ -310,22 +335,28 @@ fun NewMovementScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("DESCRIPCIÓN", color = Color.Gray, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Text(
+            text = "DESCRIPCIÓN", 
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+            style = MaterialTheme.typography.labelSmall, 
+            fontWeight = FontWeight.Bold, 
+            modifier = Modifier.align(Alignment.Start)
+        )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = descripcion,
             onValueChange = { descripcion = it },
-            placeholder = { Text("Ej: Cena con amigos", color = Color.Gray) },
+            placeholder = { Text("Ej: Cena con amigos", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = Color(0xFF1E293B),
-                focusedContainerColor = Color(0xFF1E293B),
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                 unfocusedBorderColor = Color.Transparent,
-                focusedBorderColor = Color(0xFF6366F1),
-                cursorColor = Color.White,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground
             )
         )
 
@@ -333,38 +364,46 @@ fun NewMovementScreen(
 
         // Compra en cuotas Card
         Surface(
-            color = Color(0xFF1E293B),
+            color = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(16.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF334155)),
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
-                        color = Color(0xFF312E81),
+                        color = MaterialTheme.colorScheme.primaryContainer,
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
                             Icons.Default.Payments,
                             contentDescription = null,
-                            tint = Color(0xFFFB7185),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.padding(8.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Compra en cuotas", color = Color.White, fontWeight = FontWeight.Bold)
-                        Text("Dividir el pago en meses", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            text = "Compra en cuotas", 
+                            color = MaterialTheme.colorScheme.onSurface, 
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Dividir el pago en meses", 
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, 
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                     Switch(
                         checked = esCuotas,
                         onCheckedChange = { esCuotas = it },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = Color(0xFF6366F1),
-                            uncheckedThumbColor = Color.Gray,
-                            uncheckedTrackColor = Color(0xFF0F172A)
+                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary,
+                            uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                     )
                 }
@@ -372,7 +411,7 @@ fun NewMovementScreen(
                 if (esCuotas) {
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 16.dp),
-                        color = Color(0xFF334155)
+                        color = MaterialTheme.colorScheme.outlineVariant
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -380,35 +419,53 @@ fun NewMovementScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text("CUOTAS", color = Color.Gray, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "CUOTAS", 
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                                style = MaterialTheme.typography.labelSmall, 
+                                fontWeight = FontWeight.Bold
+                            )
                             Spacer(modifier = Modifier.height(8.dp))
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .background(Color(0xFF0F172A), RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                                     .padding(horizontal = 4.dp, vertical = 2.dp)
                             ) {
                                 IconButton(onClick = { if (cantidadCuotas > 1) cantidadCuotas-- }, modifier = Modifier.size(32.dp)) {
-                                    Icon(Icons.Default.Remove, contentDescription = null, tint = Color.White)
+                                    Icon(
+                                        imageVector = Icons.Default.Remove, 
+                                        contentDescription = null, 
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
                                 Text(
                                     text = cantidadCuotas.toString(),
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(horizontal = 12.dp),
                                     fontWeight = FontWeight.Bold
                                 )
                                 IconButton(onClick = { cantidadCuotas++ }, modifier = Modifier.size(32.dp)) {
-                                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White)
+                                    Icon(
+                                        imageVector = Icons.Default.Add, 
+                                        contentDescription = null, 
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
                             }
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("MENSUALIDAD", color = Color.Gray, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "MENSUALIDAD", 
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                                style = MaterialTheme.typography.labelSmall, 
+                                fontWeight = FontWeight.Bold
+                            )
                             Spacer(modifier = Modifier.height(8.dp))
                             val monthlyAmount = (amount.toDoubleOrNull() ?: 0.0) / cantidadCuotas
                             Text(
                                 text = "$ ${String.format("%.2f", monthlyAmount)}",
-                                color = Color(0xFF2DD4BF),
+                                color = MaterialTheme.colorScheme.secondary,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 20.sp
                             )
@@ -456,16 +513,22 @@ fun SectionHeader(title: String, trailing: @Composable () -> Unit = {}) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = title, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(
+            text = title, 
+            color = MaterialTheme.colorScheme.onBackground, 
+            style = MaterialTheme.typography.titleMedium, 
+            fontWeight = FontWeight.Bold
+        )
         trailing()
     }
 }
 
 @Composable
 fun CategoryItemView(name: String, icon: ImageVector, isSelected: Boolean, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Surface(
-            color = if (isSelected) Color(0xFF312E81) else Color(0xFF1E293B),
+            color = if (isSelected) colors.primaryContainer else colors.surfaceVariant.copy(alpha = 0.5f),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
                 .size(60.dp)
@@ -474,19 +537,24 @@ fun CategoryItemView(name: String, icon: ImageVector, isSelected: Boolean, onCli
             Icon(
                 icon,
                 contentDescription = name,
-                tint = if (isSelected) Color(0xFF6366F1) else Color.Gray,
+                tint = if (isSelected) colors.onPrimaryContainer else colors.onSurfaceVariant,
                 modifier = Modifier.padding(18.dp)
             )
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = name, color = if (isSelected) Color.White else Color.Gray, style = MaterialTheme.typography.labelSmall)
+        Text(
+            text = name, 
+            color = if (isSelected) colors.onBackground else colors.onSurfaceVariant, 
+            style = MaterialTheme.typography.labelSmall
+        )
     }
 }
 
 @Composable
 fun CustomDropdownSelector(text: String, icon: ImageVector, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
     Surface(
-        color = Color(0xFF1E293B),
+        color = colors.surfaceVariant.copy(alpha = 0.3f),
         shape = RoundedCornerShape(12.dp),
         modifier = modifier.clickable { onClick() }
     ) {
@@ -494,10 +562,24 @@ fun CustomDropdownSelector(text: String, icon: ImageVector, modifier: Modifier =
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+            Icon(
+                imageVector = icon, 
+                contentDescription = null, 
+                tint = colors.onSurfaceVariant, 
+                modifier = Modifier.size(20.dp)
+            )
             Spacer(modifier = Modifier.width(12.dp))
-            Text(text = text, color = Color.White, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-            Icon(Icons.Default.KeyboardArrowDown, contentDescription = null, tint = Color.Gray)
+            Text(
+                text = text, 
+                color = colors.onSurface, 
+                modifier = Modifier.weight(1f), 
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown, 
+                contentDescription = null, 
+                tint = colors.onSurfaceVariant
+            )
         }
     }
 }
