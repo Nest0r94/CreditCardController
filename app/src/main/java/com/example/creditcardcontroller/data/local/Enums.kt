@@ -7,3 +7,7 @@ enum class Frecuencia {
 enum class TipoDescuento {
     EN_PAGO, REINTEGRO_TARJETA, REINTEGRO_CUENTA
 }
+
+enum class AppTheme {
+    LIGHT, DARK, SYSTEM
+}

@@ -17,14 +17,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.creditcardcontroller.data.local.AppTheme
+import com.example.creditcardcontroller.data.local.SettingsDataStore
 import com.example.creditcardcontroller.ui.composables.settings.IconBox
 import com.example.creditcardcontroller.ui.composables.settings.SettingGroup
 import com.example.creditcardcontroller.ui.composables.settings.SettingInfoCard
@@ -32,13 +36,24 @@ import com.example.creditcardcontroller.ui.composables.settings.SettingItemBase
 import com.example.creditcardcontroller.ui.composables.settings.SettingItemSelection
 import com.example.creditcardcontroller.ui.composables.settings.SettingItemSwitch
 import com.example.creditcardcontroller.ui.composables.settings.ThemeSelector
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppPreferencesScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    var selectedTheme by remember { mutableStateOf("Oscuro") }
+    val scope = rememberCoroutineScope()
+    val settingsDataStore = remember { SettingsDataStore(context) }
+    
+    val currentTheme by settingsDataStore.themeFlow.collectAsState(initial = AppTheme.SYSTEM)
+    
     var biometryEnabled by remember { mutableStateOf(true) }
     var autoLockEnabled by remember { mutableStateOf(false) }
+
+    val themeLabel = when (currentTheme) {
+        AppTheme.DARK -> "Oscuro"
+        AppTheme.LIGHT -> "Claro"
+        AppTheme.SYSTEM -> "Sistema"
+    }
 
     Column(
         modifier = modifier
@@ -72,8 +87,17 @@ fun AppPreferencesScreen(modifier: Modifier = Modifier) {
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
                 ThemeSelector(
-                    selectedTheme = selectedTheme,
-                    onThemeSelected = { selectedTheme = it }
+                    selectedTheme = themeLabel,
+                    onThemeSelected = { label ->
+                        val newTheme = when (label) {
+                            "Oscuro" -> AppTheme.DARK
+                            "Claro" -> AppTheme.LIGHT
+                            else -> AppTheme.SYSTEM
+                        }
+                        scope.launch {
+                            settingsDataStore.setTheme(newTheme)
+                        }
+                    }
                 )
             }
         }
