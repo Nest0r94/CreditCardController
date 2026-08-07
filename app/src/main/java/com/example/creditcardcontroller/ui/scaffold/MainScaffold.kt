@@ -1,5 +1,6 @@
 package com.example.creditcardcontroller.ui.scaffold
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -27,6 +28,15 @@ fun MainScaffold() {
     var isEditMode by remember { mutableStateOf(false) }
     var editingTarjetaId by remember { mutableStateOf<Long?>(null) }
     var isPromoEditMode by remember { mutableStateOf(false) }
+
+    BackHandler(enabled = currentRoute != "inicio") {
+        currentRoute = when (currentRoute) {
+            "editar_tarjeta" -> "tarjetas"
+            "editar_oferta" -> "promos"
+            "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias" -> "ajustes"
+            else -> "inicio"
+        }
+    }
 
     val isSubScreen = currentRoute in listOf("editar_tarjeta", "editar_oferta", "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias")
 
