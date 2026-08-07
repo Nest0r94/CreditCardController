@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -23,7 +24,8 @@ fun OfferTextField(
     onValueChange: (String) -> Unit,
     placeholder: String = "",
     trailingText: String? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     Column(modifier = modifier) {
         Text(
@@ -47,7 +49,8 @@ fun OfferTextField(
             trailingIcon = if (trailingText != null) {
                 { Text(trailingText, modifier = Modifier.padding(end = 12.dp), fontWeight = FontWeight.Bold) }
             } else null,
-            singleLine = true
+            singleLine = true,
+            keyboardOptions = keyboardOptions
         )
     }
 }
