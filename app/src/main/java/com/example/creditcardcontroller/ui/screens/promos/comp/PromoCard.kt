@@ -114,38 +114,46 @@ fun PromoCard(promo: PromoData, onClick: () -> Unit = {}) {
             if (!promo.isFinalized) {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Progress Section
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Text(
-                        text = "Reembolsado $${promo.reimbursed} / $${promo.limit}",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = colors.onSurfaceVariant
+                if (promo.limit > 0) {
+                    // Progress Section
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Text(
+                            text = "Reembolsado $${promo.reimbursed} / $${promo.limit}",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = colors.onSurfaceVariant
+                        )
+                        Text(
+                            text = if (promo.reimbursed >= promo.limit) "Límite Alcanzado" else "${(promo.reimbursed.toFloat() / promo.limit * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    LinearProgressIndicator(
+                        progress = { promo.reimbursed.toFloat() / promo.limit },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp)),
+                        color = colors.secondary,
+                        trackColor = colors.outlineVariant.copy(alpha = 0.3f),
+                        strokeCap = StrokeCap.Round,
+                        gapSize = 0.dp,
+                        drawStopIndicator = {}
                     )
+                } else {
                     Text(
-                        text = if (promo.reimbursed >= promo.limit) "Límite Alcanzado" else "${(promo.reimbursed.toFloat() / promo.limit * 100).toInt()}%",
+                        text = "Reembolsado $${promo.reimbursed}",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                         color = colors.onSurfaceVariant
                     )
                 }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                LinearProgressIndicator(
-                    progress = { promo.reimbursed.toFloat() / promo.limit },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp)),
-                    color = colors.secondary,
-                    trackColor = colors.outlineVariant.copy(alpha = 0.3f),
-                    strokeCap = StrokeCap.Round,
-                    gapSize = 0.dp,
-                    drawStopIndicator = {}
-                )
             }
         }
     }
@@ -164,6 +172,25 @@ fun PromoCardPreview() {
                     expiryDate = "DIC 31",
                     reimbursed = 1500,
                     limit = 5000
+                )
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PromoCardNoLimitPreview() {
+    CreditCardControllerTheme {
+        Box(modifier = Modifier.padding(16.dp)) {
+            PromoCard(
+                promo = PromoData(
+                    title = "Restaurantes",
+                    description = "15% de descuento sin tope",
+                    icon = Icons.Default.ShoppingCart,
+                    expiryDate = "DIC 31",
+                    reimbursed = 2000,
+                    limit = 0
                 )
             )
         }

@@ -197,15 +197,30 @@ fun PromosScreen(
 }
 
 private fun DescuentoEntity.isExpired(): Boolean {
-    return fechaVencimiento > 0 && fechaVencimiento < System.currentTimeMillis()
+    if (fechaVencimiento <= 0) return false
+    val sdf = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+    val expiryDateStr = sdf.format(Date(fechaVencimiento))
+    val todayStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
+    return expiryDateStr < todayStr
+}
+
+private fun DescuentoEntity.isExpiringToday(): Boolean {
+    if (fechaVencimiento <= 0) return false
+    val sdf = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("UTC")
+    }
+    val expiryDateStr = sdf.format(Date(fechaVencimiento))
+    val todayStr = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
+    return expiryDateStr == todayStr
 }
 
 private fun DescuentoEntity.isActiveToday(): Boolean {
     val calendar = Calendar.getInstance()
     val todayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
     
-    val now = System.currentTimeMillis()
-    if (fechaVencimiento in 1..<now) return false
+    if (this.isExpired()) return false
     
     return diasHabiles.isEmpty() || diasHabiles.contains(todayOfWeek)
 }
@@ -217,10 +232,13 @@ private fun DescuentoEntity.toPromoData(): PromoData {
         TipoDescuento.REINTEGRO_CUENTA -> Icons.Default.AccountBalance
     }
 
-    val isExpired = fechaVencimiento > 0 && fechaVencimiento < System.currentTimeMillis()
+    val isExpired = this.isExpired()
+    val isExpiringToday = this.isExpiringToday()
 
     val expiryStr = if (fechaVencimiento > 0) {
-        val sdf = SimpleDateFormat("MMM dd", Locale.getDefault())
+        val sdf = SimpleDateFormat("MMM dd", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
         sdf.format(Date(fechaVencimiento))
     } else {
         "Sin límite"
@@ -231,8 +249,8 @@ private fun DescuentoEntity.toPromoData(): PromoData {
         description = descripcion,
         icon = icon,
         expiryDate = when {
+            isExpiringToday -> "Hoy"
             isExpired -> "VENCIDO"
-            this.isActiveToday() -> "Hoy"
             else -> expiryStr
         },
         reimbursed = 0,
