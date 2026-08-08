@@ -63,6 +63,10 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
+    // Biometric
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.fragment.ktx)
+
     // DataStore
     implementation(libs.androidx.datastore.preferences)
 }

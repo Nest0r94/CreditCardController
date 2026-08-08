@@ -45,9 +45,8 @@ fun AppPreferencesScreen(modifier: Modifier = Modifier) {
     val settingsDataStore = remember { SettingsDataStore(context) }
     
     val currentTheme by settingsDataStore.themeFlow.collectAsState(initial = AppTheme.SYSTEM)
-    
-    var biometryEnabled by remember { mutableStateOf(true) }
-    var autoLockEnabled by remember { mutableStateOf(false) }
+    val biometricEnabled by settingsDataStore.biometricEnabledFlow.collectAsState(initial = false)
+    val autoLockEnabled by settingsDataStore.autoLockEnabledFlow.collectAsState(initial = false)
 
     val themeLabel = when (currentTheme) {
         AppTheme.DARK -> "Oscuro"
@@ -106,15 +105,25 @@ fun AppPreferencesScreen(modifier: Modifier = Modifier) {
             SettingItemSwitch(
                 title = "Acceso con Biometría",
                 subtitle = "FaceID o Huella dactilar",
-                checked = biometryEnabled,
-                onCheckedChange = { biometryEnabled = it }
+                checked = biometricEnabled,
+                onCheckedChange = { 
+                    scope.launch {
+                        settingsDataStore.setBiometricEnabled(it)
+                    }
+                }
             )
-            SettingItemSwitch(
-                title = "Bloqueo automático",
-                subtitle = "Al salir o minimizar la app",
-                checked = autoLockEnabled,
-                onCheckedChange = { autoLockEnabled = it }
-            )
+            if (biometricEnabled) {
+                SettingItemSwitch(
+                    title = "Bloqueo automático",
+                    subtitle = "Al salir o minimizar la app",
+                    checked = autoLockEnabled,
+                    onCheckedChange = {
+                        scope.launch {
+                            settingsDataStore.setAutoLockEnabled(it)
+                        }
+                    }
+                )
+            }
         }
 
         SettingGroup(title = "Gestión de Datos") {
