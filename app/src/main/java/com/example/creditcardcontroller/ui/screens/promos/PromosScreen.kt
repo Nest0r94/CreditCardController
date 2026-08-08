@@ -19,10 +19,12 @@ import com.example.creditcardcontroller.data.local.AppDatabase
 import com.example.creditcardcontroller.data.local.TipoDescuento
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
+import com.example.creditcardcontroller.ui.composables.dialogs.UpdateDialog
 import com.example.creditcardcontroller.ui.screens.promos.comp.PromoCard
 import com.example.creditcardcontroller.ui.screens.promos.comp.PromoData
 import com.example.creditcardcontroller.ui.screens.promos.comp.PromosSearchBar
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -35,8 +37,10 @@ fun PromosScreen(
     val context = LocalContext.current
     val dao = remember { AppDatabase.getDatabase(context).descuentoDao() }
     val descuentos by dao.getAllDescuentos().collectAsState(initial = emptyList())
-    
+    val scope = rememberCoroutineScope()
+
     var searchQuery by remember { mutableStateOf("") }
+    var selectedDescuento by remember { mutableStateOf<DescuentoEntity?>(null) }
 
     val filteredDescuentos = descuentos.filter {
         it.nombre.contains(searchQuery, ignoreCase = true) ||
@@ -102,7 +106,13 @@ fun PromosScreen(
                 items(promosHoy) { descuento ->
                     PromoCard(
                         promo = descuento.toPromoData(),
-                        onClick = { onEditPromo(descuento) }
+                        onClick = {
+                            if (descuento.isExpired()) {
+                                selectedDescuento = descuento
+                            } else {
+                                onEditPromo(descuento)
+                            }
+                        }
                     )
                 }
             }
@@ -123,7 +133,13 @@ fun PromosScreen(
                 items(otrasPromos) { descuento ->
                     PromoCard(
                         promo = descuento.toPromoData(),
-                        onClick = { onEditPromo(descuento) }
+                        onClick = {
+                            if (descuento.isExpired()) {
+                                selectedDescuento = descuento
+                            } else {
+                                onEditPromo(descuento)
+                            }
+                        }
                     )
                 }
             }
@@ -157,6 +173,31 @@ fun PromosScreen(
             icon = Icons.Default.Add
         )
     }
+
+    if (selectedDescuento != null) {
+        UpdateDialog(
+            title = "Oferta Vencida",
+            body = "Esta promoción ha expirado (${selectedDescuento?.nombre}). ¿Qué deseas hacer?",
+            initialDateMillis = selectedDescuento!!.fechaVencimiento,
+            onDismiss = { selectedDescuento = null },
+            onUpdate = { newDateMillis ->
+                scope.launch {
+                    dao.update(selectedDescuento!!.copy(fechaVencimiento = newDateMillis))
+                    selectedDescuento = null
+                }
+            },
+            onDelete = {
+                scope.launch {
+                    dao.delete(selectedDescuento!!)
+                    selectedDescuento = null
+                }
+            }
+        )
+    }
+}
+
+private fun DescuentoEntity.isExpired(): Boolean {
+    return fechaVencimiento > 0 && fechaVencimiento < System.currentTimeMillis()
 }
 
 private fun DescuentoEntity.isActiveToday(): Boolean {
@@ -164,7 +205,7 @@ private fun DescuentoEntity.isActiveToday(): Boolean {
     val todayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
     
     val now = System.currentTimeMillis()
-    if (fechaVencimiento > 0 && fechaVencimiento < now) return false
+    if (fechaVencimiento in 1..<now) return false
     
     return diasHabiles.isEmpty() || diasHabiles.contains(todayOfWeek)
 }
@@ -175,6 +216,8 @@ private fun DescuentoEntity.toPromoData(): PromoData {
         TipoDescuento.REINTEGRO_TARJETA -> Icons.Default.CreditCard
         TipoDescuento.REINTEGRO_CUENTA -> Icons.Default.AccountBalance
     }
+
+    val isExpired = fechaVencimiento > 0 && fechaVencimiento < System.currentTimeMillis()
 
     val expiryStr = if (fechaVencimiento > 0) {
         val sdf = SimpleDateFormat("MMM dd", Locale.getDefault())
@@ -187,10 +230,14 @@ private fun DescuentoEntity.toPromoData(): PromoData {
         title = nombre,
         description = descripcion,
         icon = icon,
-        expiryDate = if (this.isActiveToday()) "Hoy" else expiryStr,
+        expiryDate = when {
+            isExpired -> "VENCIDO"
+            this.isActiveToday() -> "Hoy"
+            else -> expiryStr
+        },
         reimbursed = 0,
         limit = montoTope.toInt(),
-        isFinalized = fechaVencimiento > 0 && fechaVencimiento < System.currentTimeMillis()
+        isFinalized = isExpired
     )
 }
 

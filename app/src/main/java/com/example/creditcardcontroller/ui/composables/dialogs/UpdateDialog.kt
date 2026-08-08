@@ -3,7 +3,6 @@ package com.example.creditcardcontroller.ui.composables.dialogs
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -16,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.composables.actions.TextActionButton
-import com.example.creditcardcontroller.ui.composables.inputs.FormInput
+import com.example.creditcardcontroller.ui.composables.inputs.OfferDateField
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
 @Composable
@@ -24,9 +23,9 @@ fun UpdateDialog(
     title: String,
     body: String,
     onDismiss: () -> Unit,
-    onUpdate: (String) -> Unit,
+    onUpdate: (Long) -> Unit,
     onDelete: () -> Unit,
-    initialDate: String = "20/05/2024"
+    initialDateMillis: Long? = null
 ) {
     Dialog(onDismissRequest = onDismiss) {
         UpdateDialogContent(
@@ -35,7 +34,7 @@ fun UpdateDialog(
             onDismiss = onDismiss,
             onUpdate = onUpdate,
             onDelete = onDelete,
-            initialDate = initialDate
+            initialDateMillis = initialDateMillis
         )
     }
 }
@@ -45,12 +44,12 @@ fun UpdateDialogContent(
     title: String,
     body: String,
     onDismiss: () -> Unit,
-    onUpdate: (String) -> Unit,
+    onUpdate: (Long) -> Unit,
     onDelete: () -> Unit,
-    initialDate: String = "20/05/2024",
+    initialDateMillis: Long? = null,
     modifier: Modifier = Modifier
 ) {
-    var dateValue by remember { mutableStateOf(initialDate) }
+    var dateValue by remember(initialDateMillis) { mutableStateOf(initialDateMillis) }
 
     Card(
         modifier = modifier
@@ -58,7 +57,7 @@ fun UpdateDialogContent(
             .padding(16.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(
@@ -106,12 +105,10 @@ fun UpdateDialogContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Input
-            FormInput(
-                label = "Actualizar fecha de vencimiento",
-                value = dateValue,
-                onValueChange = { dateValue = it },
-                trailingIcon = Icons.Default.CalendarToday,
-                uppercaseLabel = false
+            OfferDateField(
+                label = "Nueva fecha de vencimiento",
+                selectedDateMillis = dateValue,
+                onDateSelected = { dateValue = it }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -119,8 +116,9 @@ fun UpdateDialogContent(
             // Actions
             PrimaryButton(
                 text = "Actualizar",
-                onClick = { onUpdate(dateValue) },
-                modifier = Modifier.fillMaxWidth()
+                onClick = { dateValue?.let { onUpdate(it) } },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = dateValue != null
             )
 
             Spacer(modifier = Modifier.height(16.dp))

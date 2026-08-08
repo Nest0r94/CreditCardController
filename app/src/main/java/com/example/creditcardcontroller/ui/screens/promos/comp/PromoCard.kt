@@ -111,42 +111,42 @@ fun PromoCard(promo: PromoData, onClick: () -> Unit = {}) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            if (!promo.isFinalized) {
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Progress Section
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                if (!promo.isFinalized) {
+                // Progress Section
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Bottom
+                ) {
                     Text(
                         text = "Reembolsado $${promo.reimbursed} / $${promo.limit}",
                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                         color = colors.onSurfaceVariant
                     )
+                    Text(
+                        text = if (promo.reimbursed >= promo.limit) "Límite Alcanzado" else "${(promo.reimbursed.toFloat() / promo.limit * 100).toInt()}%",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = colors.onSurfaceVariant
+                    )
                 }
-                Text(
-                    text = if (promo.reimbursed >= promo.limit) "Límite Alcanzado" else if (promo.isFinalized) "Finalizado" else "${(promo.reimbursed.toFloat() / promo.limit * 100).toInt()}%",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                    color = if (promo.isFinalized) colors.error else colors.onSurfaceVariant
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                LinearProgressIndicator(
+                    progress = { promo.reimbursed.toFloat() / promo.limit },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp)),
+                    color = colors.secondary,
+                    trackColor = colors.outlineVariant.copy(alpha = 0.3f),
+                    strokeCap = StrokeCap.Round,
+                    gapSize = 0.dp,
+                    drawStopIndicator = {}
                 )
             }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            LinearProgressIndicator(
-                progress = { promo.reimbursed.toFloat() / promo.limit },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = if (promo.isFinalized) colors.error else colors.secondary,
-                trackColor = colors.outlineVariant.copy(alpha = 0.3f),
-                strokeCap = StrokeCap.Round,
-                gapSize = 0.dp,
-                drawStopIndicator = {}
-            )
         }
     }
 }
