@@ -2,7 +2,6 @@ package com.example.creditcardcontroller.ui.screens.editoffer
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +13,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +25,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.creditcardcontroller.data.local.AppDatabase
+import com.example.creditcardcontroller.data.local.Frecuencia
+import com.example.creditcardcontroller.data.local.TipoDescuento
+import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.screens.promos.comp.CardSelector
 import com.example.creditcardcontroller.ui.composables.inputs.OfferDateField
@@ -32,7 +35,9 @@ import com.example.creditcardcontroller.ui.composables.inputs.OfferDropdown
 import com.example.creditcardcontroller.ui.composables.inputs.OfferOption
 import com.example.creditcardcontroller.ui.composables.inputs.OfferRadioGroup
 import com.example.creditcardcontroller.ui.composables.inputs.OfferTextField
+import com.example.creditcardcontroller.ui.screens.editoffer.comp.DiasHabilesSelector
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
+import kotlinx.coroutines.launch
 
 private fun esDecimalValido(texto: String): Boolean {
     if (texto.isEmpty()) return true
@@ -48,23 +53,58 @@ private fun esDecimalValido(texto: String): Boolean {
 fun EditOfferScreen(
     modifier: Modifier = Modifier,
     isEditMode: Boolean = false,
+    offerId: Long? = null,
     onBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val tarjetaDao = remember { AppDatabase.getDatabase(context).tarjetaDao() }
+    val database = remember { AppDatabase.getDatabase(context) }
+    val tarjetaDao = remember { database.tarjetaDao() }
+    val descuentoDao = remember { database.descuentoDao() }
+    val coroutineScope = rememberCoroutineScope()
+    
     val tarjetas by tarjetaDao.getAllTarjetas().collectAsState(initial = emptyList())
     
     val scrollState = rememberScrollState()
     val colors = MaterialTheme.colorScheme
+    
     var nombre by rememberSaveable { mutableStateOf("") }
     var descripcion by rememberSaveable { mutableStateOf("") }
     var descuento by rememberSaveable { mutableStateOf("") }
     var montoTope by rememberSaveable { mutableStateOf("") }
     var limitePagos by rememberSaveable { mutableStateOf("") }
     var frecuencia by rememberSaveable { mutableStateOf("Semanal") }
-    var fechaMillis by rememberSaveable { mutableStateOf<Long?>(null) }
-    var modoDescuento by rememberSaveable { mutableStateOf(0) }
+    var fechaVencimiento by rememberSaveable { mutableStateOf<Long?>(null) }
+    var modoDescuentoIndex by rememberSaveable { mutableIntStateOf(0) }
     var selectedTarjetaIds by rememberSaveable { mutableStateOf(setOf<Long>()) }
+    var selectedDiasHabiles by rememberSaveable(
+        stateSaver = listSaver<Set<Int>, Int>(
+            save = { it.toList() },
+            restore = { it.toSet() }
+        )
+    ) { mutableStateOf<Set<Int>>(emptySet()) }
+
+    LaunchedEffect(offerId) {
+        if (isEditMode && offerId != null) {
+            val entity = descuentoDao.getById(offerId)
+            entity?.let {
+                nombre = it.nombre
+                descripcion = it.descripcion
+                descuento = it.porcentajeDescuento.toString()
+                montoTope = it.montoTope.toString()
+                limitePagos = it.cantidadLimitePagos.toString()
+                frecuencia = when (it.frecuencia) {
+                    Frecuencia.DIARIA -> "Diaria"
+                    Frecuencia.SEMANAL -> "Semanal"
+                    Frecuencia.MENSUAL -> "Mensual"
+                    Frecuencia.ANUAL -> "Anual"
+                }
+                fechaVencimiento = it.fechaVencimiento.takeIf { f -> f > 0 }
+                modoDescuentoIndex = it.tipoDescuento.ordinal
+                selectedTarjetaIds = it.tarjetasAplicables.toSet()
+                selectedDiasHabiles = it.diasHabiles.toSet()
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -75,7 +115,7 @@ fun EditOfferScreen(
         Text(
             text = "EDITOR DE BENEFICIOS",
             style = MaterialTheme.typography.labelLarge.copy(
-                color = Color(0xFF00FFD1), // Cyan color from image
+                color = Color(0xFF00FFD1),
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold
             )
@@ -133,7 +173,7 @@ fun EditOfferScreen(
             Box(modifier = Modifier.weight(1f)) {
                 OfferDropdown(
                     label = "Frecuencia",
-                    options = listOf("Diaria", "Semanal", "Quincenal", "Mensual"),
+                    options = listOf("Diaria", "Semanal", "Mensual", "Anual"),
                     selectedOption = frecuencia,
                     onOptionSelected = { frecuencia = it }
                 )
@@ -141,12 +181,18 @@ fun EditOfferScreen(
             Spacer(modifier = Modifier.width(16.dp))
             Box(modifier = Modifier.weight(1f)) {
                 OfferDateField(
-                    label = "Día / Fecha",
-                    selectedDateMillis = fechaMillis,
-                    onDateSelected = { fechaMillis = it }
+                    label = "Fecha de vencimiento",
+                    selectedDateMillis = fechaVencimiento,
+                    onDateSelected = { fechaVencimiento = it }
                 )
             }
         }
+        Spacer(modifier = Modifier.height(24.dp))
+
+        DiasHabilesSelector(
+            selectedDays = selectedDiasHabiles,
+            onDaysChange = { selectedDiasHabiles = it }
+        )
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
@@ -162,8 +208,8 @@ fun EditOfferScreen(
                 OfferOption("Reintegro en tarjeta", "Confirmación manual posterior"),
                 OfferOption("Reintegro en cuenta", "Crédito inmediato en ahorro")
             ),
-            selectedIndex = modoDescuento,
-            onOptionSelected = { modoDescuento = it }
+            selectedIndex = modoDescuentoIndex,
+            onOptionSelected = { modoDescuentoIndex = it }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -256,8 +302,38 @@ fun EditOfferScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         PrimaryButton(
-            text = "Guardar Oferta",
-            onClick = onBack,
+            text = if (isEditMode) "Actualizar Oferta" else "Guardar Oferta",
+            onClick = {
+                coroutineScope.launch {
+                    val freq = when (frecuencia) {
+                        "Diaria" -> Frecuencia.DIARIA
+                        "Semanal" -> Frecuencia.SEMANAL
+                        "Mensual" -> Frecuencia.MENSUAL
+                        else -> Frecuencia.ANUAL
+                    }
+
+                    val entity = DescuentoEntity(
+                        id = offerId ?: 0L,
+                        nombre = nombre,
+                        descripcion = descripcion,
+                        porcentajeDescuento = descuento.toDoubleOrNull() ?: 0.0,
+                        montoTope = montoTope.toDoubleOrNull() ?: 0.0,
+                        cantidadLimitePagos = limitePagos.toIntOrNull() ?: 0,
+                        frecuencia = freq,
+                        fechaVencimiento = fechaVencimiento ?: 0L,
+                        diasHabiles = selectedDiasHabiles.toList(),
+                        tarjetasAplicables = selectedTarjetaIds.toList(),
+                        tipoDescuento = TipoDescuento.values()[modoDescuentoIndex]
+                    )
+
+                    if (isEditMode && offerId != null) {
+                        descuentoDao.update(entity)
+                    } else {
+                        descuentoDao.insert(entity)
+                    }
+                    onBack()
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             icon = Icons.Default.Save
         )

@@ -28,6 +28,7 @@ fun MainScaffold() {
     var isEditMode by remember { mutableStateOf(false) }
     var editingTarjetaId by remember { mutableStateOf<Long?>(null) }
     var isPromoEditMode by remember { mutableStateOf(false) }
+    var editingPromoId by remember { mutableStateOf<Long?>(null) }
 
     BackHandler(enabled = currentRoute != "inicio") {
         currentRoute = when (currentRoute) {
@@ -101,16 +102,19 @@ fun MainScaffold() {
                 modifier = modifier,
                 onAddPromo = {
                     isPromoEditMode = false
+                    editingPromoId = null
                     currentRoute = "editar_oferta"
                 },
-                onEditPromo = {
+                onEditPromo = { promo ->
                     isPromoEditMode = true
+                    editingPromoId = promo.id
                     currentRoute = "editar_oferta"
                 }
             )
             "editar_oferta" -> EditOfferScreen(
                 modifier = modifier,
                 isEditMode = isPromoEditMode,
+                offerId = editingPromoId,
                 onBack = { currentRoute = "promos" }
             )
             "ajustes" -> SettingsScreen(

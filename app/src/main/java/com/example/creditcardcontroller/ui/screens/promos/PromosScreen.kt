@@ -11,22 +11,40 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.creditcardcontroller.data.local.AppDatabase
+import com.example.creditcardcontroller.data.local.TipoDescuento
+import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.screens.promos.comp.PromoCard
 import com.example.creditcardcontroller.ui.screens.promos.comp.PromoData
 import com.example.creditcardcontroller.ui.screens.promos.comp.PromosSearchBar
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun PromosScreen(
     modifier: Modifier = Modifier,
     onAddPromo: () -> Unit = {},
-    onEditPromo: (PromoData) -> Unit = {}
+    onEditPromo: (DescuentoEntity) -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val dao = remember { AppDatabase.getDatabase(context).descuentoDao() }
+    val descuentos by dao.getAllDescuentos().collectAsState(initial = emptyList())
+    
     var searchQuery by remember { mutableStateOf("") }
+
+    val filteredDescuentos = descuentos.filter {
+        it.nombre.contains(searchQuery, ignoreCase = true) ||
+        it.descripcion.contains(searchQuery, ignoreCase = true)
+    }
+
+    val promosHoy = filteredDescuentos.filter { it.isActiveToday() }
+    val otrasPromos = filteredDescuentos.filter { !it.isActiveToday() }
 
     Column(
         modifier = modifier
@@ -69,35 +87,62 @@ fun PromosScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            item {
-                Text(
-                    text = "Promociones del Día",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    ),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+            if (promosHoy.isNotEmpty()) {
+                item {
+                    Text(
+                        text = "Promociones del Día",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        ),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+
+                items(promosHoy) { descuento ->
+                    PromoCard(
+                        promo = descuento.toPromoData(),
+                        onClick = { onEditPromo(descuento) }
+                    )
+                }
             }
 
-            items(promosDelDia) { promo ->
-                PromoCard(promo, onClick = { onEditPromo(promo) })
+            if (otrasPromos.isNotEmpty()) {
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Otras Promociones",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        ),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+
+                items(otrasPromos) { descuento ->
+                    PromoCard(
+                        promo = descuento.toPromoData(),
+                        onClick = { onEditPromo(descuento) }
+                    )
+                }
             }
 
-            item {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Otras Promociones",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    ),
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
-
-            items(otrasPromos) { promo ->
-                PromoCard(promo, onClick = { onEditPromo(promo) })
+            if (descuentos.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillParentMaxWidth()
+                            .padding(top = 64.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No hay promociones registradas",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
 
@@ -114,44 +159,40 @@ fun PromosScreen(
     }
 }
 
-val promosDelDia = listOf(
-    PromoData(
-        title = "The Bistro",
-        description = "25% de descuento total",
-        icon = Icons.Default.Restaurant,
-        expiryDate = "Hoy",
-        reimbursed = 120,
-        limit = 500
-    ),
-    PromoData(
-        title = "Cloud Store",
-        description = "$100 de crédito en equipos",
-        icon = Icons.Default.Cloud,
-        expiryDate = "Hoy",
-        reimbursed = 300,
-        limit = 300
-    )
-)
+private fun DescuentoEntity.isActiveToday(): Boolean {
+    val calendar = Calendar.getInstance()
+    val todayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+    
+    val now = System.currentTimeMillis()
+    if (fechaVencimiento > 0 && fechaVencimiento < now) return false
+    
+    return diasHabiles.isEmpty() || diasHabiles.contains(todayOfWeek)
+}
 
-val otrasPromos = listOf(
-    PromoData(
-        title = "Vogue Apparel",
-        description = "15% dto. Nueva Temporada",
-        icon = Icons.Default.Checkroom,
-        expiryDate = "Oct 05",
-        reimbursed = 45,
-        limit = 200
-    ),
-    PromoData(
-        title = "Sky High Travel",
-        description = "10% Cashback en vuelos",
-        icon = Icons.Default.Flight,
-        expiryDate = "VENCIDO",
-        reimbursed = 50,
-        limit = 50,
-        isFinalized = true
+private fun DescuentoEntity.toPromoData(): PromoData {
+    val icon = when (tipoDescuento) {
+        TipoDescuento.EN_PAGO -> Icons.Default.ShoppingBag
+        TipoDescuento.REINTEGRO_TARJETA -> Icons.Default.CreditCard
+        TipoDescuento.REINTEGRO_CUENTA -> Icons.Default.AccountBalance
+    }
+
+    val expiryStr = if (fechaVencimiento > 0) {
+        val sdf = SimpleDateFormat("MMM dd", Locale.getDefault())
+        sdf.format(Date(fechaVencimiento))
+    } else {
+        "Sin límite"
+    }
+
+    return PromoData(
+        title = nombre,
+        description = descripcion,
+        icon = icon,
+        expiryDate = if (this.isActiveToday()) "Hoy" else expiryStr,
+        reimbursed = 0,
+        limit = montoTope.toInt(),
+        isFinalized = fechaVencimiento > 0 && fechaVencimiento < System.currentTimeMillis()
     )
-)
+}
 
 @Preview(showBackground = true)
 @Composable
