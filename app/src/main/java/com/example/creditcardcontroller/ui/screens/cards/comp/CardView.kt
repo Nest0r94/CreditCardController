@@ -20,7 +20,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,11 +27,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.creditcardcontroller.ui.composables.feedback.LimitProgressBar
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
 @Composable
@@ -152,24 +151,14 @@ fun CardView(
                 Spacer(modifier = Modifier.weight(1f))
 
                 // Uso Actual y Barra de Progreso
-                Column {
-                    Text(
-                        text = "USO ACTUAL: ${String.format("%.1f", usagePercentage * 100)}%",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    LinearProgressIndicator(
-                        progress = { usagePercentage },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp),
-                        color = Color.White,
-                        trackColor = Color.White.copy(alpha = 0.2f),
-                        strokeCap = StrokeCap.Round
-                    )
-                }
+                LimitProgressBar(
+                    progress = usagePercentage,
+                    leftLabel = "USO ACTUAL: ${String.format("%.1f", usagePercentage * 100)}%",
+                    labelColor = Color.White,
+                    indicatorColor = Color.White,
+                    trackColor = Color.White.copy(alpha = 0.2f),
+                    barHeight = 8.dp
+                )
             }
         }
     }

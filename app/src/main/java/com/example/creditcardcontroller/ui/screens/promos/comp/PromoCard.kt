@@ -10,12 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.creditcardcontroller.ui.composables.feedback.LimitProgressBar
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
 data class PromoData(
@@ -115,37 +115,10 @@ fun PromoCard(promo: PromoData, onClick: () -> Unit = {}) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (promo.limit > 0) {
-                    // Progress Section
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        Text(
-                            text = "Reembolsado $${promo.reimbursed} / $${promo.limit}",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                            color = colors.onSurfaceVariant
-                        )
-                        Text(
-                            text = if (promo.reimbursed >= promo.limit) "Límite Alcanzado" else "${(promo.reimbursed.toFloat() / promo.limit * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                            color = colors.onSurfaceVariant
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    LinearProgressIndicator(
-                        progress = { promo.reimbursed.toFloat() / promo.limit },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(4.dp)
-                            .clip(RoundedCornerShape(2.dp)),
-                        color = colors.secondary,
-                        trackColor = colors.outlineVariant.copy(alpha = 0.3f),
-                        strokeCap = StrokeCap.Round,
-                        gapSize = 0.dp,
-                        drawStopIndicator = {}
+                    LimitProgressBar(
+                        progress = promo.reimbursed.toFloat() / promo.limit,
+                        leftLabel = "Reembolsado $${promo.reimbursed} / $${promo.limit}",
+                        rightLabel = if (promo.reimbursed >= promo.limit) "Límite Alcanzado" else "${(promo.reimbursed.toFloat() / promo.limit * 100).toInt()}%"
                     )
                 } else {
                     Text(
