@@ -51,7 +51,7 @@ fun NewMovementScreen(
     val categorias by db.categoriaDao().getAllCategorias().collectAsState(initial = emptyList())
 
     var amount by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("Otros") }
+    var selectedCategoriaId by remember { mutableStateOf<Long?>(null) }
     var selectedTarjeta by remember { mutableStateOf<TarjetaEntity?>(null) }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var selectedDescuento by remember { mutableStateOf<DescuentoEntity?>(null) }
@@ -70,6 +70,12 @@ fun NewMovementScreen(
     LaunchedEffect(tarjetas) {
         if (selectedTarjeta == null && tarjetas.isNotEmpty()) {
             selectedTarjeta = tarjetas.first()
+        }
+    }
+
+    LaunchedEffect(categorias) {
+        if (selectedCategoriaId == null && categorias.isNotEmpty()) {
+            selectedCategoriaId = categorias.firstOrNull { it.nombre == "Otros" }?.id ?: categorias.first().id
         }
     }
 
@@ -227,15 +233,21 @@ fun NewMovementScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            val categoriesItems = listOf(
-                "Comida" to Icons.Default.Restaurant,
-                "Compras" to Icons.Default.ShoppingBag,
-                "Transporte" to Icons.Default.DirectionsCar,
-                "Ocio" to Icons.Default.Movie,
-                "Otros" to Icons.Default.MoreHoriz
-            )
-            categoriesItems.forEach { (name, icon) ->
-                CategoryItemView(name, icon, selectedCategory == name) { selectedCategory = name }
+            if (categorias.isEmpty()) {
+                Text(
+                    text = "No hay categorías disponibles",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            } else {
+                categorias.forEach { categoria ->
+                    CategoryItemView(
+                        name = categoria.nombre,
+                        icon = iconoDeCategoria(categoria.icono),
+                        color = colorDeCategoria(categoria.color),
+                        isSelected = categoria.id == selectedCategoriaId
+                    ) { selectedCategoriaId = categoria.id }
+                }
             }
         }
 
@@ -481,7 +493,7 @@ fun NewMovementScreen(
             text = "Guardar Gasto",
             onClick = {
                 scope.launch {
-                    val catId = categorias.find { it.nombre == selectedCategory }?.id ?: 1L
+                    val catId = selectedCategoriaId ?: categorias.firstOrNull()?.id ?: 0
                     val movement = MovimientoEntity(
                         descripcion = descripcion,
                         monto = amount.toDoubleOrNull() ?: 0.0,
@@ -524,7 +536,7 @@ fun SectionHeader(title: String, trailing: @Composable () -> Unit = {}) {
 }
 
 @Composable
-fun CategoryItemView(name: String, icon: ImageVector, isSelected: Boolean, onClick: () -> Unit) {
+fun CategoryItemView(name: String, icon: ImageVector, color: Color, isSelected: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Surface(
@@ -537,7 +549,7 @@ fun CategoryItemView(name: String, icon: ImageVector, isSelected: Boolean, onCli
             Icon(
                 icon,
                 contentDescription = name,
-                tint = if (isSelected) colors.onPrimaryContainer else colors.onSurfaceVariant,
+                tint = if (isSelected) color else color.copy(alpha = 0.6f),
                 modifier = Modifier.padding(18.dp)
             )
         }
@@ -547,6 +559,24 @@ fun CategoryItemView(name: String, icon: ImageVector, isSelected: Boolean, onCli
             color = if (isSelected) colors.onBackground else colors.onSurfaceVariant, 
             style = MaterialTheme.typography.labelSmall
         )
+    }
+}
+
+private fun iconoDeCategoria(icono: String): ImageVector = when (icono) {
+    "Restaurant" -> Icons.Default.Restaurant
+    "ShoppingBag" -> Icons.Default.ShoppingBag
+    "DirectionsCar" -> Icons.Default.DirectionsCar
+    "Movie" -> Icons.Default.Movie
+    else -> Icons.Default.MoreHoriz
+}
+
+private fun colorDeCategoria(hex: String): Color {
+    val clean = hex.removePrefix("#")
+    val rgb = clean.toLongOrNull(16)
+    return if (clean.length == 6 && rgb != null) {
+        Color(0xFF000000L or rgb)
+    } else {
+        Color(0xFF757575)
     }
 }
 

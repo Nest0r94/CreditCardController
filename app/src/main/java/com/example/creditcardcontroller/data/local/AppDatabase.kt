@@ -21,7 +21,7 @@ import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
         TarjetaEntity::class,
         DescuentoEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -30,6 +30,12 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun categoriaDao(): CategoriaDao
     abstract fun tarjetaDao(): TarjetaDao
     abstract fun descuentoDao(): DescuentoDao
+
+    suspend fun seedCategoriasSiVacia() {
+        if (categoriaDao().count() == 0) {
+            categoriaDao().insertAll(DefaultCategorias.lista)
+        }
+    }
 
     companion object {
         @Volatile

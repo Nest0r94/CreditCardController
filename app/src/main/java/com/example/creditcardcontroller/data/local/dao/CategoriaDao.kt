@@ -6,11 +6,17 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CategoriaDao {
-    @Query("SELECT * FROM categorias ORDER BY nombre ASC")
+    @Query("SELECT * FROM categorias ORDER BY id ASC")
     fun getAllCategorias(): Flow<List<CategoriaEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(categoria: CategoriaEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(categorias: List<CategoriaEntity>)
+
+    @Query("SELECT COUNT(*) FROM categorias")
+    suspend fun count(): Int
 
     @Update
     suspend fun update(categoria: CategoriaEntity)

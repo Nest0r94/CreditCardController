@@ -15,6 +15,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.fragment.app.FragmentActivity
+import com.example.creditcardcontroller.data.local.AppDatabase
 import com.example.creditcardcontroller.data.local.AppTheme
 import com.example.creditcardcontroller.data.local.SettingsDataStore
 import com.example.creditcardcontroller.ui.scaffold.MainScaffold
@@ -27,6 +28,11 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         setContent {
             val settingsDataStore = remember { SettingsDataStore(applicationContext) }
+
+            LaunchedEffect(Unit) {
+                AppDatabase.getDatabase(applicationContext).seedCategoriasSiVacia()
+            }
+
             val theme by settingsDataStore.themeFlow.collectAsState(initial = AppTheme.SYSTEM)
             val biometricEnabled by settingsDataStore.biometricEnabledFlow.collectAsState(initial = null)
             val autoLockEnabled by settingsDataStore.autoLockEnabledFlow.collectAsState(initial = false)
