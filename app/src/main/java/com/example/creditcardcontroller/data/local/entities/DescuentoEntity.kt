@@ -17,5 +17,6 @@ data class DescuentoEntity(
     val fechaVencimiento: Long,
     val diasHabiles: List<Int>, // 1-7
     val tarjetasAplicables: List<Long>, // IDs de tarjetas
-    val tipoDescuento: TipoDescuento
+    val tipoDescuento: TipoDescuento,
+    val categoriaId: Long = 0
 )

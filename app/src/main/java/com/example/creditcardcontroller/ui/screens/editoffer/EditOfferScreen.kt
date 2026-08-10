@@ -29,6 +29,9 @@ import com.example.creditcardcontroller.data.local.Frecuencia
 import com.example.creditcardcontroller.data.local.TipoDescuento
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
+import com.example.creditcardcontroller.ui.composables.categories.colorDeCategoria
+import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategoria
+import com.example.creditcardcontroller.ui.screens.new_movement.CategoryItemView
 import com.example.creditcardcontroller.ui.screens.promos.comp.CardSelector
 import com.example.creditcardcontroller.ui.composables.inputs.OfferDateField
 import com.example.creditcardcontroller.ui.composables.inputs.OfferDropdown
@@ -60,9 +63,11 @@ fun EditOfferScreen(
     val database = remember { AppDatabase.getDatabase(context) }
     val tarjetaDao = remember { database.tarjetaDao() }
     val descuentoDao = remember { database.descuentoDao() }
+    val categoriaDao = remember { database.categoriaDao() }
     val coroutineScope = rememberCoroutineScope()
     
     val tarjetas by tarjetaDao.getAllTarjetas().collectAsState(initial = emptyList())
+    val categorias by categoriaDao.getAllCategorias().collectAsState(initial = emptyList())
     
     val scrollState = rememberScrollState()
     val colors = MaterialTheme.colorScheme
@@ -75,6 +80,7 @@ fun EditOfferScreen(
     var frecuencia by rememberSaveable { mutableStateOf("Semanal") }
     var fechaVencimiento by rememberSaveable { mutableStateOf<Long?>(null) }
     var modoDescuentoIndex by rememberSaveable { mutableIntStateOf(0) }
+    var selectedCategoriaId by rememberSaveable { mutableStateOf<Long?>(null) }
     var selectedTarjetaIds by rememberSaveable { mutableStateOf(setOf<Long>()) }
     var selectedDiasHabiles by rememberSaveable(
         stateSaver = listSaver<Set<Int>, Int>(
@@ -100,6 +106,7 @@ fun EditOfferScreen(
                 }
                 fechaVencimiento = it.fechaVencimiento.takeIf { f -> f > 0 }
                 modoDescuentoIndex = it.tipoDescuento.ordinal
+                selectedCategoriaId = it.categoriaId.takeIf { c -> c > 0 }
                 selectedTarjetaIds = it.tarjetasAplicables.toSet()
                 selectedDiasHabiles = it.diasHabiles.toSet()
             }
@@ -215,6 +222,46 @@ fun EditOfferScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
+            text = "Categoría",
+            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+            color = colors.onSurfaceVariant
+        )
+        Text(
+            text = "Selecciona la categoría de este beneficio",
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            categorias.forEach { categoria ->
+                CategoryItemView(
+                    name = categoria.nombre,
+                    icon = iconoDeCategoria(categoria.icono),
+                    color = colorDeCategoria(categoria.color),
+                    isSelected = selectedCategoriaId == categoria.id
+                ) {
+                    selectedCategoriaId = categoria.id
+                }
+            }
+            if (categorias.isEmpty()) {
+                Text(
+                    text = "No hay categorías registradas",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
             text = "Tarjetas Aplicables",
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
             color = colors.onSurfaceVariant
@@ -323,7 +370,8 @@ fun EditOfferScreen(
                         fechaVencimiento = fechaVencimiento ?: 0L,
                         diasHabiles = selectedDiasHabiles.toList(),
                         tarjetasAplicables = selectedTarjetaIds.toList(),
-                        tipoDescuento = TipoDescuento.values()[modoDescuentoIndex]
+                        tipoDescuento = TipoDescuento.values()[modoDescuentoIndex],
+                        categoriaId = selectedCategoriaId ?: 0L
                     )
 
                     if (isEditMode && offerId != null) {

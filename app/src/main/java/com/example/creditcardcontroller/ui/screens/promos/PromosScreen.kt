@@ -17,9 +17,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.creditcardcontroller.data.local.AppDatabase
 import com.example.creditcardcontroller.data.local.TipoDescuento
+import com.example.creditcardcontroller.data.local.entities.CategoriaEntity
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
+import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategoria
 import com.example.creditcardcontroller.ui.composables.dialogs.UpdateDialog
+import com.example.creditcardcontroller.ui.screens.promos.comp.CategoryFilterChips
 import com.example.creditcardcontroller.ui.screens.promos.comp.PromoCard
 import com.example.creditcardcontroller.ui.screens.promos.comp.PromoData
 import com.example.creditcardcontroller.ui.screens.promos.comp.PromosSearchBar
@@ -35,16 +38,21 @@ fun PromosScreen(
     onEditPromo: (DescuentoEntity) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val dao = remember { AppDatabase.getDatabase(context).descuentoDao() }
+    val database = remember { AppDatabase.getDatabase(context) }
+    val dao = remember { database.descuentoDao() }
     val descuentos by dao.getAllDescuentos().collectAsState(initial = emptyList())
+    val categorias by database.categoriaDao().getAllCategorias().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
 
     var searchQuery by remember { mutableStateOf("") }
+    var selectedCategoriaIds by remember { mutableStateOf(setOf<Long>()) }
     var selectedDescuento by remember { mutableStateOf<DescuentoEntity?>(null) }
 
     val filteredDescuentos = descuentos.filter {
-        it.nombre.contains(searchQuery, ignoreCase = true) ||
-        it.descripcion.contains(searchQuery, ignoreCase = true)
+        val matchesSearch = it.nombre.contains(searchQuery, ignoreCase = true) ||
+            it.descripcion.contains(searchQuery, ignoreCase = true)
+        val matchesCategory = selectedCategoriaIds.isEmpty() || selectedCategoriaIds.contains(it.categoriaId)
+        matchesSearch && matchesCategory
     }
 
     val promosHoy = filteredDescuentos.filter { it.isActiveToday() }
@@ -86,6 +94,22 @@ fun PromosScreen(
             onQueryChange = { searchQuery = it }
         )
 
+        // Category Filter
+        if (categorias.isNotEmpty()) {
+            CategoryFilterChips(
+                categorias = categorias,
+                selectedIds = selectedCategoriaIds,
+                onToggle = { id ->
+                    selectedCategoriaIds = if (selectedCategoriaIds.contains(id)) {
+                        selectedCategoriaIds - id
+                    } else {
+                        selectedCategoriaIds + id
+                    }
+                },
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+
         LazyColumn(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -105,7 +129,7 @@ fun PromosScreen(
 
                 items(promosHoy) { descuento ->
                     PromoCard(
-                        promo = descuento.toPromoData(),
+                        promo = descuento.toPromoData(categorias),
                         onClick = {
                             if (descuento.isExpired()) {
                                 selectedDescuento = descuento
@@ -132,7 +156,7 @@ fun PromosScreen(
 
                 items(otrasPromos) { descuento ->
                     PromoCard(
-                        promo = descuento.toPromoData(),
+                        promo = descuento.toPromoData(categorias),
                         onClick = {
                             if (descuento.isExpired()) {
                                 selectedDescuento = descuento
@@ -225,11 +249,16 @@ private fun DescuentoEntity.isActiveToday(): Boolean {
     return diasHabiles.isEmpty() || diasHabiles.contains(todayOfWeek)
 }
 
-private fun DescuentoEntity.toPromoData(): PromoData {
-    val icon = when (tipoDescuento) {
-        TipoDescuento.EN_PAGO -> Icons.Default.ShoppingBag
-        TipoDescuento.REINTEGRO_TARJETA -> Icons.Default.CreditCard
-        TipoDescuento.REINTEGRO_CUENTA -> Icons.Default.AccountBalance
+private fun DescuentoEntity.toPromoData(categorias: List<CategoriaEntity>): PromoData {
+    val categoria = categorias.find { it.id == this.categoriaId }
+    val icon = if (categoria != null) {
+        iconoDeCategoria(categoria.icono)
+    } else {
+        when (tipoDescuento) {
+            TipoDescuento.EN_PAGO -> Icons.Default.ShoppingBag
+            TipoDescuento.REINTEGRO_TARJETA -> Icons.Default.CreditCard
+            TipoDescuento.REINTEGRO_CUENTA -> Icons.Default.AccountBalance
+        }
     }
 
     val isExpired = this.isExpired()

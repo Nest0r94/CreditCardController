@@ -30,6 +30,8 @@ import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
+import com.example.creditcardcontroller.ui.composables.categories.colorDeCategoria
+import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategoria
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -559,24 +561,6 @@ fun CategoryItemView(name: String, icon: ImageVector, color: Color, isSelected: 
             color = if (isSelected) colors.onBackground else colors.onSurfaceVariant, 
             style = MaterialTheme.typography.labelSmall
         )
-    }
-}
-
-private fun iconoDeCategoria(icono: String): ImageVector = when (icono) {
-    "Restaurant" -> Icons.Default.Restaurant
-    "ShoppingBag" -> Icons.Default.ShoppingBag
-    "DirectionsCar" -> Icons.Default.DirectionsCar
-    "Movie" -> Icons.Default.Movie
-    else -> Icons.Default.MoreHoriz
-}
-
-private fun colorDeCategoria(hex: String): Color {
-    val clean = hex.removePrefix("#")
-    val rgb = clean.toLongOrNull(16)
-    return if (clean.length == 6 && rgb != null) {
-        Color(0xFF000000L or rgb)
-    } else {
-        Color(0xFF757575)
     }
 }
 
