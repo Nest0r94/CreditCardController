@@ -10,6 +10,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import com.example.creditcardcontroller.ui.screens.home.HomeScreen
 import com.example.creditcardcontroller.ui.screens.cards.CardsScreen
 import com.example.creditcardcontroller.ui.screens.new_movement.NewMovementScreen
@@ -46,9 +49,10 @@ fun MainScaffold() {
         topBar = {
             val title = when (currentRoute) {
                 "inicio" -> "Inicio"
+                "balance" -> "Balance"
                 "tarjetas" -> "Mis Tarjetas"
                 "nuevo" -> "Nuevo Movimiento"
-                "estadisticas" -> "Estadísticas"
+                "estadisticas" -> "Datos"
                 "promos" -> "Promociones"
                 "ajustes" -> "Ajustes"
                 "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias" -> "Configuración"
@@ -75,6 +79,9 @@ fun MainScaffold() {
         val modifier = Modifier.padding(innerPadding)
         when (currentRoute) {
             "inicio" -> HomeScreen(modifier = modifier)
+            "balance" -> Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = "Pantalla de Balance (Placeholder)")
+            }
             "tarjetas" -> CardsScreen(
                 modifier = modifier,
                 onEditCard = { tarjetaId ->
