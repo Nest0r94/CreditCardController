@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.creditcardcontroller.data.local.entities.CategoriaEntity
 import com.example.creditcardcontroller.ui.composables.categories.colorDeCategoria
@@ -36,7 +37,13 @@ fun CategoryFilterChips(
             FilterChip(
                 selected = selected,
                 onClick = { onToggle(categoria.id) },
-                label = { Text(categoria.nombre) },
+                label = { 
+                    Text(
+                        text = categoria.nombre,
+                        style = if (selected) MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold) 
+                               else MaterialTheme.typography.labelLarge
+                    ) 
+                },
                 leadingIcon = {
                     Icon(
                         imageVector = iconoDeCategoria(categoria.icono),
@@ -45,7 +52,7 @@ fun CategoryFilterChips(
                     )
                 },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = color.copy(alpha = 0.2f),
+                    selectedContainerColor = color.copy(alpha = 0.35f),
                     selectedLabelColor = MaterialTheme.colorScheme.onSurface,
                     selectedLeadingIconColor = color,
                     labelColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -54,7 +61,8 @@ fun CategoryFilterChips(
                     enabled = true,
                     selected = selected,
                     borderColor = color.copy(alpha = 0.5f),
-                    selectedBorderColor = color
+                    selectedBorderColor = color,
+                    borderWidth = if (selected) 2.dp else 1.dp
                 )
             )
         }

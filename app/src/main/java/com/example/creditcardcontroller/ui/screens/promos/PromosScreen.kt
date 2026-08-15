@@ -1,9 +1,11 @@
 package com.example.creditcardcontroller.ui.screens.promos
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Notifications
@@ -22,6 +24,7 @@ import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategoria
 import com.example.creditcardcontroller.ui.composables.dialogs.UpdateDialog
+import com.example.creditcardcontroller.ui.screens.promos.comp.CardSelector
 import com.example.creditcardcontroller.ui.screens.promos.comp.CategoryFilterChips
 import com.example.creditcardcontroller.ui.screens.promos.comp.PromoCard
 import com.example.creditcardcontroller.ui.screens.promos.comp.PromoData
@@ -42,17 +45,20 @@ fun PromosScreen(
     val dao = remember { database.descuentoDao() }
     val descuentos by dao.getAllDescuentos().collectAsState(initial = emptyList())
     val categorias by database.categoriaDao().getAllCategorias().collectAsState(initial = emptyList())
+    val tarjetas by database.tarjetaDao().getAllTarjetas().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategoriaIds by remember { mutableStateOf(setOf<Long>()) }
+    var selectedCardId by remember { mutableStateOf<Long?>(null) }
     var selectedDescuento by remember { mutableStateOf<DescuentoEntity?>(null) }
 
     val filteredDescuentos = descuentos.filter {
         val matchesSearch = it.nombre.contains(searchQuery, ignoreCase = true) ||
             it.descripcion.contains(searchQuery, ignoreCase = true)
         val matchesCategory = selectedCategoriaIds.isEmpty() || selectedCategoriaIds.contains(it.categoriaId)
-        matchesSearch && matchesCategory
+        val matchesCard = selectedCardId == null || it.tarjetasAplicables.contains(selectedCardId)
+        matchesSearch && matchesCategory && matchesCard
     }
 
     val promosHoy = filteredDescuentos.filter { it.isActiveToday() }
@@ -79,12 +85,33 @@ fun PromosScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
             )
-            IconButton(onClick = { /* TODO */ }) {
-                Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "Notificaciones",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+
+            val filtersActive = searchQuery.isNotEmpty() || selectedCategoriaIds.isNotEmpty() || selectedCardId != null
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (filtersActive) {
+                    TextButton(
+                        onClick = {
+                            searchQuery = ""
+                            selectedCategoriaIds = emptySet()
+                            selectedCardId = null
+                        },
+                        contentPadding = PaddingValues(horizontal = 8.dp)
+                    ) {
+                        Text(
+                            text = "Limpiar filtros",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+                IconButton(onClick = { /* TODO */ }) {
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = "Notificaciones",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
 
@@ -106,8 +133,29 @@ fun PromosScreen(
                         selectedCategoriaIds + id
                     }
                 },
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(bottom = 8.dp)
             )
+        }
+
+        // Card Filter
+        if (tarjetas.isNotEmpty()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                tarjetas.forEach { tarjeta ->
+                    CardSelector(
+                        name = tarjeta.nombre,
+                        selected = selectedCardId == tarjeta.id,
+                        onClick = {
+                            selectedCardId = if (selectedCardId == tarjeta.id) null else tarjeta.id
+                        }
+                    )
+                }
+            }
         }
 
         LazyColumn(
