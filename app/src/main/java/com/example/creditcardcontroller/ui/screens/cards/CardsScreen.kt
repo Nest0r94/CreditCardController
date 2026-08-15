@@ -65,6 +65,7 @@ fun CardsScreen(
                 )
             } else {
                 tarjetas.forEach { tarjeta ->
+                    val isExpired = tarjeta.vencimientoTarjeta < System.currentTimeMillis()
                     CardView(
                         cardName = tarjeta.nombre,
                         amount = "$0,00",
@@ -73,6 +74,7 @@ fun CardsScreen(
                         dueDate = formatDueDate(tarjeta.fechaVencimientoResumen),
                         cardExpiration = formatExpiration(tarjeta.vencimientoTarjeta),
                         usagePercentage = 0f,
+                        isExpired = isExpired,
                         onClick = { onEditCard(tarjeta.id) }
                     )
                 }

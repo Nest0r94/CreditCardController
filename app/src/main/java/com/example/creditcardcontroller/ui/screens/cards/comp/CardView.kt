@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +44,7 @@ fun CardView(
     dueDate: String,
     cardExpiration: String,
     usagePercentage: Float,
+    isExpired: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     val gradient = Brush.linearGradient(
@@ -57,7 +59,8 @@ fun CardView(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp),
+            .height(240.dp)
+            .alpha(if (isExpired) 0.5f else 1f),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
@@ -80,19 +83,28 @@ fun CardView(
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
-                    Column(horizontalAlignment = Alignment.End) {
+                    if (isExpired) {
                         Text(
-                            text = "EXPIRA",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.7f),
+                            text = "EXPIRADO",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Red,
                             fontWeight = FontWeight.Black
                         )
-                        Text(
-                            text = cardExpiration,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
+                    } else {
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = "EXPIRA",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Black
+                            )
+                            Text(
+                                text = cardExpiration,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
 
@@ -196,7 +208,10 @@ fun DateItem(icon: androidx.compose.ui.graphics.vector.ImageVector, label: Strin
 @Composable
 fun CardViewPreview() {
     CreditCardControllerTheme {
-        Box(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             CardView(
                 cardName = "Visa Principal",
                 amount = "$1,240.00",
@@ -205,6 +220,17 @@ fun CardViewPreview() {
                 dueDate = "02 Nov",
                 cardExpiration = "12/28",
                 usagePercentage = 0.248f
+            )
+
+            CardView(
+                cardName = "Mastercard Gold",
+                amount = "$850.00",
+                limit = "$2,000",
+                closingDate = "10 Oct",
+                dueDate = "25 Oct",
+                cardExpiration = "01/24",
+                usagePercentage = 0.425f,
+                isExpired = true
             )
         }
     }
