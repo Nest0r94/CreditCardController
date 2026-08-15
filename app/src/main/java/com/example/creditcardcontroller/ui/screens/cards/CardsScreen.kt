@@ -16,15 +16,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.creditcardcontroller.data.local.AppDatabase
+import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
+import com.example.creditcardcontroller.ui.composables.dialogs.UpdateDialog
 import com.example.creditcardcontroller.ui.screens.cards.comp.CardView
+import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.ZoneId
@@ -38,8 +44,11 @@ fun CardsScreen(
     onAddCard: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val tarjetaDao = remember { AppDatabase.getDatabase(context).tarjetaDao() }
     val tarjetas by tarjetaDao.getAllTarjetas().collectAsState(initial = emptyList())
+
+    var selectedTarjeta by remember { mutableStateOf<TarjetaEntity?>(null) }
 
     Column(
         modifier = modifier
@@ -75,7 +84,13 @@ fun CardsScreen(
                         cardExpiration = formatExpiration(tarjeta.vencimientoTarjeta),
                         usagePercentage = 0f,
                         isExpired = isExpired,
-                        onClick = { onEditCard(tarjeta.id) }
+                        onClick = {
+                            if (isExpired) {
+                                selectedTarjeta = tarjeta
+                            } else {
+                                onEditCard(tarjeta.id)
+                            }
+                        }
                     )
                 }
 
@@ -90,6 +105,27 @@ fun CardsScreen(
             onClick = onAddCard,
             modifier = Modifier.fillMaxWidth(),
             icon = Icons.Default.Add
+        )
+    }
+
+    if (selectedTarjeta != null) {
+        UpdateDialog(
+            title = "Tarjeta Vencida",
+            body = "La tarjeta ${selectedTarjeta!!.nombre} ha vencido. ¿Deseas actualizar la fecha de vencimiento o eliminarla?",
+            onDismiss = { selectedTarjeta = null },
+            onUpdate = { newDate ->
+                scope.launch {
+                    tarjetaDao.update(selectedTarjeta!!.copy(vencimientoTarjeta = newDate))
+                    selectedTarjeta = null
+                }
+            },
+            onDelete = {
+                scope.launch {
+                    tarjetaDao.delete(selectedTarjeta!!)
+                    selectedTarjeta = null
+                }
+            },
+            initialDateMillis = selectedTarjeta!!.vencimientoTarjeta
         )
     }
 }
