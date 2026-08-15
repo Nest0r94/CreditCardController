@@ -51,12 +51,19 @@ fun NewMovementScreen(
     val tarjetas by db.tarjetaDao().getAllTarjetas().collectAsState(initial = emptyList())
     val descuentos by db.descuentoDao().getAllDescuentos().collectAsState(initial = emptyList())
     val categorias by db.categoriaDao().getAllCategorias().collectAsState(initial = emptyList())
+    val movimientos by db.movimientoDao().getAllMovements().collectAsState(initial = emptyList())
 
     var amount by remember { mutableStateOf("") }
     var selectedCategoriaId by remember { mutableStateOf<Long?>(null) }
     var selectedTarjeta by remember { mutableStateOf<TarjetaEntity?>(null) }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var selectedDescuento by remember { mutableStateOf<DescuentoEntity?>(null) }
+
+    val filteredDescuentos = remember(selectedTarjeta, descuentos) {
+        selectedTarjeta?.let { tarjeta ->
+            descuentos.filter { it.tarjetasAplicables.contains(tarjeta.id) }
+        } ?: emptyList()
+    }
     var descripcion by remember { mutableStateOf("") }
     var esCuotas by remember { mutableStateOf(false) }
     var cantidadCuotas by remember { mutableStateOf(3) }
@@ -64,6 +71,35 @@ fun NewMovementScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTarjetaDropdown by remember { mutableStateOf(false) }
     var showDescuentoDropdown by remember { mutableStateOf(false) }
+
+    val ahorroEstimado = remember(amount, selectedDescuento, movimientos, selectedDate) {
+        val amountDouble = amount.toDoubleOrNull() ?: 0.0
+        val descuento = selectedDescuento
+        if (descuento != null && amountDouble > 0) {
+            val potentialAhorro = amountDouble * (descuento.porcentajeDescuento / 100.0)
+            
+            if (descuento.montoTope > 0) {
+                // Filtramos los movimientos que usan este descuento en el mismo mes y año
+                val startOfMonth = selectedDate.withDayOfMonth(1)
+                val endOfMonth = selectedDate.withDayOfMonth(selectedDate.lengthOfMonth())
+                
+                val currentPeriodMovements = movimientos.filter { mov ->
+                    val movDate = Instant.ofEpochMilli(mov.fecha).atZone(ZoneId.systemDefault()).toLocalDate()
+                    mov.descuentoId == descuento.id && 
+                    !movDate.isBefore(startOfMonth) && !movDate.isAfter(endOfMonth)
+                }
+                
+                val usedAhorro = currentPeriodMovements.sumOf { it.montoReintegrable }
+                val remainingLimit = maxOf(0.0, descuento.montoTope - usedAhorro)
+                
+                minOf(potentialAhorro, remainingLimit)
+            } else {
+                potentialAhorro
+            }
+        } else {
+            0.0
+        }
+    }
 
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -213,7 +249,11 @@ fun NewMovementScreen(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Ahorro Estimado: $450.00 (Promo Visa)",
+                    text = if (selectedDescuento != null) {
+                        "Ahorro Estimado: $${String.format("%.2f", ahorroEstimado)} (${selectedDescuento!!.nombre})"
+                    } else {
+                        "Sin promoción seleccionada"
+                    },
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold
@@ -266,7 +306,7 @@ fun NewMovementScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Box {
                     CustomDropdownSelector(
-                        text = selectedTarjeta?.let { "${it.nombre} •• ${it.id % 100}" } ?: "Visa •• 42",
+                        text = selectedTarjeta?.let { "${it.nombre}"} ?: "",
                         icon = Icons.Default.CreditCard
                     ) {
                         showTarjetaDropdown = true
@@ -282,6 +322,10 @@ fun NewMovementScreen(
                                 onClick = {
                                     selectedTarjeta = tarjeta
                                     showTarjetaDropdown = false
+                                    // Reset discount if it doesn't apply to the new card
+                                    if (selectedDescuento != null && !selectedDescuento!!.tarjetasAplicables.contains(tarjeta.id)) {
+                                        selectedDescuento = null
+                                    }
                                 }
                             )
                         }
@@ -318,18 +362,24 @@ fun NewMovementScreen(
         Spacer(modifier = Modifier.height(8.dp))
         Box(modifier = Modifier.fillMaxWidth()) {
             CustomDropdownSelector(
-                text = selectedDescuento?.nombre ?: "Seleccionar promoción...",
+                text = when {
+                    selectedTarjeta == null -> "Seleccione un medio de pago"
+                    selectedDescuento != null -> selectedDescuento!!.nombre
+                    else -> "Seleccionar promoción..."
+                },
                 icon = Icons.Default.LocalOffer,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                showDescuentoDropdown = true
+                if (selectedTarjeta != null) {
+                    showDescuentoDropdown = true
+                }
             }
             DropdownMenu(
                 expanded = showDescuentoDropdown,
                 onDismissRequest = { showDescuentoDropdown = false },
                 modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                descuentos.forEach { descuento ->
+                filteredDescuentos.forEach { descuento ->
                     DropdownMenuItem(
                         text = { Text(descuento.nombre, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                         onClick = {
@@ -338,7 +388,7 @@ fun NewMovementScreen(
                         }
                     )
                 }
-                if (descuentos.isEmpty()) {
+                if (filteredDescuentos.isEmpty()) {
                     DropdownMenuItem(
                         text = { Text("No hay promociones disponibles", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
                         onClick = { showDescuentoDropdown = false }
@@ -505,7 +555,7 @@ fun NewMovementScreen(
                         categoriaId = catId,
                         tarjetaId = selectedTarjeta?.id ?: 0,
                         descuentoId = selectedDescuento?.id,
-                        montoReintegrable = 0.0,
+                        montoReintegrable = ahorroEstimado,
                         montoReintegrado = false
                     )
                     db.movimientoDao().insert(movement)
