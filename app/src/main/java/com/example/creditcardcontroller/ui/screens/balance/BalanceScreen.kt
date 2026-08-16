@@ -22,28 +22,51 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.Canvas
+import com.example.creditcardcontroller.ui.composables.cards.MetricChip
 import com.example.creditcardcontroller.ui.composables.layout.FinancialSurface
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import java.time.YearMonth
+import java.time.format.TextStyle
+import java.util.Locale
 import java.util.UUID
 
 @Composable
 fun BalanceScreen(modifier: Modifier = Modifier) {
-    var monthlyIncome by remember { mutableDoubleStateOf(4500.0) }
+    var totalMonthlyIncome by remember { mutableDoubleStateOf(4500.0) }
     var programmedMonthlyExpense by remember { mutableDoubleStateOf(2150.0) }
 
+    var selectedDate by remember { mutableStateOf(YearMonth.now()) }
+    var showMonthPicker by remember { mutableStateOf(false) }
+    var showYearPicker by remember { mutableStateOf(false) }
+
+    var showAddIncomeDialog by remember { mutableStateOf(false) }
     var editingItem by remember { mutableStateOf<EditableItem?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
 
-    val expenses = remember {
+    val incomes = remember {
         mutableStateListOf(
-            ExpenseItemData("1", "Gasto 1 cuota en tarjeta", "Visa finaliza en 4512", 450.0, Icons.Default.CreditCard, Color(0xFF00BFA5)),
-            ExpenseItemData("2", "Gasto mensual de tarjeta", "Cuotas 3/12", 850.0, Icons.Default.AccountBalanceWallet, Color(0xFFE57373)),
-            ExpenseItemData("3", "Gasto en cuenta/efectivo", "Transferencias automáticas", 850.0, Icons.Default.AccountBalance, Color(0xFF455A64))
+            ExpenseItemData(UUID.randomUUID().toString(), "Ingreso mensual", 4500.0, Icons.Default.AddChart, Color(0xFF4CAF50))
         )
     }
 
-    // Calculate programmed expense based on items
-    LaunchedEffect(expenses.toList()) {
+    val expenses = remember {
+        mutableStateListOf(
+            ExpenseItemData("1", "Gasto 1 cuota en tarjeta", 450.0, Icons.Default.CreditCard, Color(0xFF00BFA5)),
+            ExpenseItemData("2", "Gasto mensual de tarjeta", 850.0, Icons.Default.AccountBalanceWallet, Color(0xFFE57373)),
+            ExpenseItemData("3", "Gasto en cuenta/efectivo", 850.0, Icons.Default.AccountBalance, Color(0xFF455A64))
+        )
+    }
+
+    // Calculate total income and programmed expense based on items
+    LaunchedEffect(incomes.toList(), expenses.toList()) {
+        totalMonthlyIncome = incomes.sumOf { it.amount }
         programmedMonthlyExpense = expenses.sumOf { it.amount }
     }
 
@@ -56,29 +79,19 @@ fun BalanceScreen(modifier: Modifier = Modifier) {
             contentPadding = PaddingValues(bottom = 24.dp, top = 16.dp)
         ) {
             item {
-                Text(
-                    text = "Resumen de Montos",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+                DateHeader(
+                    selectedDate = selectedDate,
+                    onMonthClick = { showMonthPicker = true },
+                    onYearClick = { showYearPicker = true },
+                    onPreviousMonth = { selectedDate = selectedDate.minusMonths(1) },
+                    onNextMonth = { selectedDate = selectedDate.plusMonths(1) }
                 )
             }
 
             item {
-                SummaryCard(
-                    title = "Ingreso Mensual",
-                    amount = monthlyIncome,
-                    icon = Icons.Default.Edit,
-                    onEditClick = { editingItem = EditableItem.Income }
-                )
-            }
-
-            item {
-                SummaryCard(
-                    title = "Gasto Mensual Programado",
-                    amount = programmedMonthlyExpense,
-                    icon = Icons.Default.AccountBalanceWallet,
-                    onEditClick = { /* No editing for this one as it's calculated */ }
+                SummarySection(
+                    totalIncome = totalMonthlyIncome,
+                    totalExpense = programmedMonthlyExpense
                 )
             }
 
@@ -90,19 +103,64 @@ fun BalanceScreen(modifier: Modifier = Modifier) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Desglose de Ingresos",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Text(
+                            text = "Total mensual: $ ${formatAmount(totalMonthlyIncome)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Text(
-                        text = "Desglose de Gastos",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = "Agregar gasto programado",
+                        text = "Agregar ingreso",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         textAlign = TextAlign.End,
                         modifier = Modifier
-                            .weight(1f)
+                            .clickable { showAddIncomeDialog = true }
+                    )
+                }
+            }
+
+            items(incomes) { income ->
+                ExpenseRow(
+                    expense = income,
+                    onEditClick = { editingItem = EditableItem.Income(income) }
+                )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Desglose de Gastos",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Text(
+                            text = "Total programado: $ ${formatAmount(programmedMonthlyExpense)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Text(
+                        text = "Agregar gasto",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier
                             .clickable { showAddDialog = true }
                     )
                 }
@@ -117,6 +175,45 @@ fun BalanceScreen(modifier: Modifier = Modifier) {
         }
     }
 
+    if (showMonthPicker) {
+        MonthPickerDialog(
+            onDismiss = { showMonthPicker = false },
+            onMonthSelected = { month ->
+                selectedDate = selectedDate.withMonth(month)
+                showMonthPicker = false
+            }
+        )
+    }
+
+    if (showYearPicker) {
+        YearPickerDialog(
+            currentYear = selectedDate.year,
+            onDismiss = { showYearPicker = false },
+            onYearSelected = { year ->
+                selectedDate = selectedDate.withYear(year)
+                showYearPicker = false
+            }
+        )
+    }
+
+    if (showAddIncomeDialog) {
+        AddIncomeDialog(
+            onDismiss = { showAddIncomeDialog = false },
+            onConfirm = { name, amount ->
+                incomes.add(
+                    ExpenseItemData(
+                        id = UUID.randomUUID().toString(),
+                        title = name,
+                        amount = amount,
+                        icon = Icons.Default.Payments,
+                        iconBackground = Color(0xFF4CAF50)
+                    )
+                )
+                showAddIncomeDialog = false
+            }
+        )
+    }
+
     if (showAddDialog) {
         AddExpenseDialog(
             onDismiss = { showAddDialog = false },
@@ -125,7 +222,6 @@ fun BalanceScreen(modifier: Modifier = Modifier) {
                     ExpenseItemData(
                         id = UUID.randomUUID().toString(),
                         title = name,
-                        subtitle = "",
                         amount = amount,
                         icon = Icons.Default.ShoppingCart,
                         iconBackground = Color(0xFF7E57C2)
@@ -138,11 +234,11 @@ fun BalanceScreen(modifier: Modifier = Modifier) {
 
     editingItem?.let { item ->
         val initialAmount = when (item) {
-            is EditableItem.Income -> monthlyIncome
+            is EditableItem.Income -> item.data.amount
             is EditableItem.Expense -> item.data.amount
         }
         val title = when (item) {
-            is EditableItem.Income -> "Editar Ingreso Mensual"
+            is EditableItem.Income -> "Editar ${item.data.title}"
             is EditableItem.Expense -> "Editar ${item.data.title}"
         }
 
@@ -152,7 +248,12 @@ fun BalanceScreen(modifier: Modifier = Modifier) {
             onDismiss = { editingItem = null },
             onConfirm = { newAmount ->
                 when (item) {
-                    is EditableItem.Income -> monthlyIncome = newAmount
+                    is EditableItem.Income -> {
+                        val index = incomes.indexOfFirst { it.id == item.data.id }
+                        if (index != -1) {
+                            incomes[index] = item.data.copy(amount = newAmount)
+                        }
+                    }
                     is EditableItem.Expense -> {
                         val index = expenses.indexOfFirst { it.id == item.data.id }
                         if (index != -1) {
@@ -167,70 +268,226 @@ fun BalanceScreen(modifier: Modifier = Modifier) {
 }
 
 sealed class EditableItem {
-    object Income : EditableItem()
+    data class Income(val data: ExpenseItemData) : EditableItem()
     data class Expense(val data: ExpenseItemData) : EditableItem()
 }
 
 data class ExpenseItemData(
     val id: String,
     val title: String,
-    val subtitle: String,
     val amount: Double,
     val icon: ImageVector,
     val iconBackground: Color
 )
 
 @Composable
-fun SummaryCard(
-    title: String,
-    amount: Double,
-    icon: ImageVector,
-    onEditClick: () -> Unit
+fun SummarySection(
+    totalIncome: Double,
+    totalExpense: Double
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+    val savings = totalIncome - totalExpense
+    val savingsColor = Color(0xFFFFC107) // Amarillo para Ahorro
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        // Table/Grid of metrics
+        Column(
+            modifier = Modifier.weight(1.2f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column {
-                Text(
-                    text = title.uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+            MetricChip(
+                modifier = Modifier.fillMaxWidth(),
+                title = "Ingresos",
+                value = "$ ${formatAmount(totalIncome)}",
+                color = Color(0xFF4CAF50)
+            )
+            MetricChip(
+                modifier = Modifier.fillMaxWidth(),
+                title = "Gastos",
+                value = "$ ${formatAmount(totalExpense)}",
+                color = Color(0xFFF44336)
+            )
+            MetricChip(
+                modifier = Modifier.fillMaxWidth(),
+                title = "Ahorro",
+                value = "$ ${formatAmount(savings)}",
+                color = savingsColor
+            )
+        }
+
+        // Pie Chart
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .aspectRatio(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            val total = totalIncome.coerceAtLeast(1.0)
+            val expenseAngle = (totalExpense / total * 360f).toFloat().coerceIn(0f, 360f)
+            val savingsAngle = 360f - expenseAngle
+            
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                drawArc(
+                    color = Color(0xFFF44336),
+                    startAngle = -90f,
+                    sweepAngle = expenseAngle,
+                    useCenter = false,
+                    style = Stroke(width = 12.dp.toPx())
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "$ ${formatAmount(amount)}",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                drawArc(
+                    color = Color(0xFFFFC107), // Amarillo para la porción de ahorro
+                    startAngle = -90f + expenseAngle,
+                    sweepAngle = savingsAngle,
+                    useCenter = false,
+                    style = Stroke(width = 12.dp.toPx())
                 )
             }
             
-            IconButton(
-                onClick = onEditClick,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = "Editar",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val percentage = if (totalIncome > 0) (totalExpense / totalIncome * 100).toInt() else 0
+                Text(
+                    text = "$percentage%",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "Gasto",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
     }
+}
+@Composable
+fun DateHeader(
+    selectedDate: YearMonth,
+    onMonthClick: () -> Unit,
+    onYearClick: () -> Unit,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onPreviousMonth) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBackIos,
+                contentDescription = "Mes anterior",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = selectedDate.month.getDisplayName(TextStyle.FULL, Locale("es", "ES")).replaceFirstChar { it.uppercase() },
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.clickable { onMonthClick() }
+            )
+            Text(
+                text = " ",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = selectedDate.year.toString(),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.clickable { onYearClick() }
+            )
+        }
+
+        IconButton(onClick = onNextMonth) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = "Mes siguiente",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+@Composable
+fun MonthPickerDialog(
+    onDismiss: () -> Unit,
+    onMonthSelected: (Int) -> Unit
+) {
+    val months = (1..12).toList()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Seleccionar Mes") },
+        text = {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier.height(200.dp)
+            ) {
+                items(months) { month ->
+                    val monthName = YearMonth.of(2000, month).month.getDisplayName(TextStyle.SHORT, Locale("es", "ES"))
+                    TextButton(
+                        onClick = { onMonthSelected(month) },
+                        modifier = Modifier.padding(4.dp)
+                    ) {
+                        Text(monthName.uppercase())
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cerrar")
+            }
+        }
+    )
+}
+
+@Composable
+fun YearPickerDialog(
+    currentYear: Int,
+    onDismiss: () -> Unit,
+    onYearSelected: (Int) -> Unit
+) {
+    val years = (currentYear - 5..currentYear + 5).toList()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Seleccionar Año") },
+        text = {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier.height(200.dp)
+            ) {
+                items(years) { year ->
+                    TextButton(
+                        onClick = { onYearSelected(year) },
+                        modifier = Modifier.padding(4.dp)
+                    ) {
+                        Text(year.toString())
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cerrar")
+            }
+        }
+    )
 }
 
 @Composable
@@ -403,8 +660,57 @@ fun AddExpenseDialog(
     )
 }
 
+@Composable
+fun AddIncomeDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, Double) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var amountText by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Agregar Ingreso") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nombre del ingreso") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = { amountText = it },
+                    label = { Text("Monto") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val amount = amountText.toDoubleOrNull() ?: 0.0
+                    onConfirm(name, amount)
+                },
+                enabled = amountText.isNotBlank()
+            ) {
+                Text("Agregar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
 private fun formatAmount(amount: Double): String {
-    return String.format("%,.2f", amount)
+    return String.format(java.util.Locale.US, "%,.2f", amount)
         .replace(',', 'X')
         .replace('.', ',')
         .replace('X', '.')
