@@ -22,6 +22,7 @@ import com.example.creditcardcontroller.ui.screens.settings.SettingsScreen
 import com.example.creditcardcontroller.ui.screens.settings.NotificationsSettingsScreen
 import com.example.creditcardcontroller.ui.screens.settings.PermissionsSettingsScreen
 import com.example.creditcardcontroller.ui.screens.settings.AppPreferencesScreen
+import com.example.creditcardcontroller.ui.screens.settings.HelpCenterScreen
 import com.example.creditcardcontroller.ui.screens.editcard.EditCardScreen
 import com.example.creditcardcontroller.ui.screens.editoffer.EditOfferScreen
 
@@ -37,12 +38,12 @@ fun MainScaffold() {
         currentRoute = when (currentRoute) {
             "editar_tarjeta" -> "tarjetas"
             "editar_oferta" -> "promos"
-            "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias" -> "ajustes"
+            "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias", "ajustes_ayuda" -> "ajustes"
             else -> "inicio"
         }
     }
 
-    val isSubScreen = currentRoute in listOf("editar_tarjeta", "editar_oferta", "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias")
+    val isSubScreen = currentRoute in listOf("editar_tarjeta", "editar_oferta", "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias", "ajustes_ayuda")
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -55,7 +56,7 @@ fun MainScaffold() {
                 "estadisticas" -> "Datos"
                 "promos" -> "Promociones"
                 "ajustes" -> "Ajustes"
-                "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias" -> "Configuración"
+                "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias", "ajustes_ayuda" -> "Configuración"
                 "editar_tarjeta" -> if (isEditMode) "Editar Tarjeta" else "Agregar Tarjeta"
                 "editar_oferta" -> if (isPromoEditMode) "Editar Oferta" else "Agregar Oferta"
                 else -> "Credit Card Controller"
@@ -64,7 +65,7 @@ fun MainScaffold() {
             val onBack: (() -> Unit)? = when (currentRoute) {
                 "editar_tarjeta" -> { { currentRoute = "tarjetas" } }
                 "editar_oferta" -> { { currentRoute = "promos" } }
-                "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias" -> { { currentRoute = "ajustes" } }
+                "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias", "ajustes_ayuda" -> { { currentRoute = "ajustes" } }
                 else -> null
             }
 
@@ -131,6 +132,7 @@ fun MainScaffold() {
             "ajustes_notificaciones" -> NotificationsSettingsScreen(modifier = modifier)
             "ajustes_permisos" -> PermissionsSettingsScreen(modifier = modifier)
             "ajustes_preferencias" -> AppPreferencesScreen(modifier = modifier)
+            "ajustes_ayuda" -> HelpCenterScreen(modifier = modifier, onBack = { currentRoute = "ajustes" })
             else -> HomeScreen(modifier = modifier)
         }
     }

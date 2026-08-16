@@ -1,6 +1,5 @@
 package com.example.creditcardcontroller.ui.screens.settings
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,10 +14,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.creditcardcontroller.ui.composables.settings.SettingGroup
-import com.example.creditcardcontroller.ui.composables.settings.SettingItemBase
 import com.example.creditcardcontroller.ui.composables.settings.SettingItemGoto
 
 @Composable
@@ -26,11 +23,6 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     onNavigate: (String) -> Unit = {}
 ) {
-    val context = LocalContext.current
-    val onNotImplemented = {
-        Toast.makeText(context, "NO IMPLEMENTADO", Toast.LENGTH_SHORT).show()
-    }
-
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -68,7 +60,7 @@ fun SettingsScreen(
                 iconColor = Color(0xFF90A4AE),
                 title = "Centro de Ayuda",
                 subtitle = "Preguntas frecuentes y tutoriales",
-                onClick = onNotImplemented
+                onClick = { onNavigate("ajustes_ayuda") }
             )
         }
     }
