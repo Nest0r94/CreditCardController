@@ -1,5 +1,6 @@
 package com.example.creditcardcontroller.ui.scaffold
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -15,7 +16,8 @@ import androidx.compose.runtime.Composable
 @Composable
 fun Toolbar(
     title: String,
-    onBack: (() -> Unit)? = null
+    onBack: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {}
 ) {
     TopAppBar(
         title = { 
@@ -34,6 +36,7 @@ fun Toolbar(
                 }
             }
         },
+        actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.surface,
             titleContentColor = MaterialTheme.colorScheme.onSurface,

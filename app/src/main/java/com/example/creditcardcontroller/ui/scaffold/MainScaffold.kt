@@ -4,13 +4,16 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import com.example.creditcardcontroller.ui.screens.home.HomeScreen
@@ -25,6 +28,7 @@ import com.example.creditcardcontroller.ui.screens.settings.AppPreferencesScreen
 import com.example.creditcardcontroller.ui.screens.settings.HelpCenterScreen
 import com.example.creditcardcontroller.ui.screens.editcard.EditCardScreen
 import com.example.creditcardcontroller.ui.screens.editoffer.EditOfferScreen
+import com.example.creditcardcontroller.ui.screens.balance.BalanceScreen
 
 @Composable
 fun MainScaffold() {
@@ -69,7 +73,20 @@ fun MainScaffold() {
                 else -> null
             }
 
-            Toolbar(title = title, onBack = onBack)
+            Toolbar(
+                title = title,
+                onBack = onBack,
+                actions = {
+                    if (currentRoute == "balance") {
+                        IconButton(onClick = { }) {
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = "Perfil"
+                            )
+                        }
+                    }
+                }
+            )
         },
         bottomBar = {
             if (!isSubScreen) {
@@ -80,9 +97,7 @@ fun MainScaffold() {
         val modifier = Modifier.padding(innerPadding)
         when (currentRoute) {
             "inicio" -> HomeScreen(modifier = modifier)
-            "balance" -> Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "Pantalla de Balance (Placeholder)")
-            }
+            "balance" -> BalanceScreen(modifier = modifier)
             "tarjetas" -> CardsScreen(
                 modifier = modifier,
                 onEditCard = { tarjetaId ->
