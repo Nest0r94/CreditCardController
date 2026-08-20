@@ -54,8 +54,8 @@ class BottomBarShape(private val notchRadius: Dp, private val notchDepth: Dp) : 
 @Composable
 fun BottomNavigationBar(currentRoute: String, onNavigate: (String) -> Unit) {
     val items = listOf(
-        NavigationItem("Inicio", Icons.Default.Home, "inicio"),
-        NavigationItem("Balance", Icons.Default.AccountBalance, "balance"),
+        NavigationItem("Presupuesto", Icons.Default.AccountBalance, "balance"),
+        NavigationItem("Balances", Icons.Default.Home, "inicio"),
         NavigationItem("Datos", Icons.Default.BarChart, "estadisticas"),
         NavigationItem("Nuevo", Icons.Default.Add, "nuevo"),
         NavigationItem("Tarjetas", Icons.Default.CreditCard, "tarjetas"),

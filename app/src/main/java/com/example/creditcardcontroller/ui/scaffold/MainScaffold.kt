@@ -32,18 +32,18 @@ import com.example.creditcardcontroller.ui.screens.balance.BalanceScreen
 
 @Composable
 fun MainScaffold() {
-    var currentRoute by remember { mutableStateOf("inicio") }
+    var currentRoute by remember { mutableStateOf("balance") }
     var isEditMode by remember { mutableStateOf(false) }
     var editingTarjetaId by remember { mutableStateOf<Long?>(null) }
     var isPromoEditMode by remember { mutableStateOf(false) }
     var editingPromoId by remember { mutableStateOf<Long?>(null) }
 
-    BackHandler(enabled = currentRoute != "inicio") {
+    BackHandler(enabled = currentRoute != "balance") {
         currentRoute = when (currentRoute) {
             "editar_tarjeta" -> "tarjetas"
             "editar_oferta" -> "promos"
             "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias", "ajustes_ayuda" -> "ajustes"
-            else -> "inicio"
+            else -> "balance"
         }
     }
 
@@ -53,8 +53,8 @@ fun MainScaffold() {
         modifier = Modifier.fillMaxSize(),
         topBar = {
             val title = when (currentRoute) {
-                "inicio" -> "Inicio"
-                "balance" -> "Balance"
+                "inicio" -> "Balances"
+                "balance" -> "Presupuesto"
                 "tarjetas" -> "Mis Tarjetas"
                 "nuevo" -> "Nuevo Movimiento"
                 "estadisticas" -> "Datos"
@@ -118,7 +118,7 @@ fun MainScaffold() {
             )
             "nuevo" -> NewMovementScreen(
                 modifier = modifier,
-                onBack = { currentRoute = "inicio" }
+                onBack = { currentRoute = "balance" }
             )
             "estadisticas" -> StatsScreen(modifier = modifier)
             "promos" -> PromosScreen(
