@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 
 data class BalancesUiState(
@@ -23,6 +24,7 @@ data class BalancesUiState(
     val movimientos: List<MovimientoEntity> = emptyList(),
     val categorias: List<CategoriaEntity> = emptyList(),
     val selectedTarjetaId: Long? = null,
+    val selectedDate: YearMonth = YearMonth.now(),
     val totalPresupuesto: Double = 3200.0, // Hardcoded as per image for now or can be dynamic
     val gastoMensual: Double = 0.0,
     val gastoCuotas: Double = 0.0,
@@ -36,17 +38,18 @@ class BalancesViewModel(
 ) : ViewModel() {
 
     private val _selectedTarjetaId = MutableStateFlow<Long?>(null)
+    private val _selectedDate = MutableStateFlow(YearMonth.now())
 
     val uiState: StateFlow<BalancesUiState> = combine(
         tarjetaDao.getAllTarjetas(),
         movimientoDao.getAllMovements(),
         categoriaDao.getAllCategorias(),
-        _selectedTarjetaId
-    ) { tarjetas, movimientos, categorias, selectedId ->
+        _selectedTarjetaId,
+        _selectedDate
+    ) { tarjetas, movimientos, categorias, selectedId, selectedDate ->
         
-        val now = LocalDate.now()
-        val startOfMonth = now.withDayOfMonth(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val endOfMonth = now.withDayOfMonth(now.lengthOfMonth()).atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val startOfMonth = selectedDate.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val endOfMonth = selectedDate.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
         val movimientosMes = movimientos.filter { it.fecha in startOfMonth..endOfMonth }
         
@@ -65,6 +68,7 @@ class BalancesViewModel(
             movimientos = filteredMovimientos,
             categorias = categorias,
             selectedTarjetaId = selectedId,
+            selectedDate = selectedDate,
             gastoMensual = totalGasto,
             gastoCuotas = gastoCuotas,
             gastoUnPago = gastoUnPago
@@ -77,6 +81,10 @@ class BalancesViewModel(
 
     fun selectTarjeta(id: Long?) {
         _selectedTarjetaId.value = id
+    }
+
+    fun updateSelectedDate(date: YearMonth) {
+        _selectedDate.value = date
     }
 
     class Factory(

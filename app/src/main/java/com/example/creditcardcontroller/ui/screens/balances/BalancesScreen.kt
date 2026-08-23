@@ -17,6 +17,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -25,7 +28,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.creditcardcontroller.data.local.AppDatabase
+import com.example.creditcardcontroller.ui.composables.layout.DateHeader
 import com.example.creditcardcontroller.ui.composables.layout.FinancialSurface
+import com.example.creditcardcontroller.ui.composables.layout.MonthPickerDialog
+import com.example.creditcardcontroller.ui.composables.layout.YearPickerDialog
 import com.example.creditcardcontroller.ui.screens.balances.comp.*
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
@@ -41,6 +47,8 @@ fun BalancesScreen(
     )
 ) {
     val state by viewModel.uiState.collectAsState()
+    var showMonthPicker by remember { mutableStateOf(false) }
+    var showYearPicker by remember { mutableStateOf(false) }
 
     FinancialSurface(modifier = modifier) {
         LazyColumn(
@@ -50,7 +58,15 @@ fun BalancesScreen(
             contentPadding = PaddingValues(bottom = 24.dp, top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            item { BalancesHeader() }
+            item {
+                DateHeader(
+                    selectedDate = state.selectedDate,
+                    onMonthClick = { showMonthPicker = true },
+                    onYearClick = { showYearPicker = true },
+                    onPreviousMonth = { viewModel.updateSelectedDate(state.selectedDate.minusMonths(1)) },
+                    onNextMonth = { viewModel.updateSelectedDate(state.selectedDate.plusMonths(1)) }
+                )
+            }
 
             item {
                 SummaryCard(
@@ -138,6 +154,27 @@ fun BalancesScreen(
                     }
                 }
             }
+        }
+
+        if (showMonthPicker) {
+            MonthPickerDialog(
+                onDismiss = { showMonthPicker = false },
+                onMonthSelected = { month ->
+                    viewModel.updateSelectedDate(state.selectedDate.withMonth(month))
+                    showMonthPicker = false
+                }
+            )
+        }
+
+        if (showYearPicker) {
+            YearPickerDialog(
+                currentYear = state.selectedDate.year,
+                onDismiss = { showYearPicker = false },
+                onYearSelected = { year ->
+                    viewModel.updateSelectedDate(state.selectedDate.withYear(year))
+                    showYearPicker = false
+                }
+            )
         }
     }
 }
