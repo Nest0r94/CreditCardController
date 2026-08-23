@@ -16,7 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
-import com.example.creditcardcontroller.ui.screens.home.HomeScreen
+import com.example.creditcardcontroller.ui.screens.balances.BalancesScreen
 import com.example.creditcardcontroller.ui.screens.cards.CardsScreen
 import com.example.creditcardcontroller.ui.screens.new_movement.NewMovementScreen
 import com.example.creditcardcontroller.ui.screens.stats.StatsScreen
@@ -28,22 +28,22 @@ import com.example.creditcardcontroller.ui.screens.settings.AppPreferencesScreen
 import com.example.creditcardcontroller.ui.screens.settings.HelpCenterScreen
 import com.example.creditcardcontroller.ui.screens.editcard.EditCardScreen
 import com.example.creditcardcontroller.ui.screens.editoffer.EditOfferScreen
-import com.example.creditcardcontroller.ui.screens.balance.BalanceScreen
+import com.example.creditcardcontroller.ui.screens.budget.BudgetScreen
 
 @Composable
 fun MainScaffold() {
-    var currentRoute by remember { mutableStateOf("balance") }
+    var currentRoute by remember { mutableStateOf("presupuesto") }
     var isEditMode by remember { mutableStateOf(false) }
     var editingTarjetaId by remember { mutableStateOf<Long?>(null) }
     var isPromoEditMode by remember { mutableStateOf(false) }
     var editingPromoId by remember { mutableStateOf<Long?>(null) }
 
-    BackHandler(enabled = currentRoute != "balance") {
+    BackHandler(enabled = currentRoute != "presupuesto") {
         currentRoute = when (currentRoute) {
             "editar_tarjeta" -> "tarjetas"
             "editar_oferta" -> "promos"
             "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias", "ajustes_ayuda" -> "ajustes"
-            else -> "balance"
+            else -> "presupuesto"
         }
     }
 
@@ -53,8 +53,8 @@ fun MainScaffold() {
         modifier = Modifier.fillMaxSize(),
         topBar = {
             val title = when (currentRoute) {
-                "inicio" -> "Balances"
-                "balance" -> "Presupuesto"
+                "balances" -> "Balances"
+                "presupuesto" -> "Presupuesto"
                 "tarjetas" -> "Mis Tarjetas"
                 "nuevo" -> "Nuevo Movimiento"
                 "estadisticas" -> "Datos"
@@ -77,7 +77,7 @@ fun MainScaffold() {
                 title = title,
                 onBack = onBack,
                 actions = {
-                    if (currentRoute == "balance") {
+                    if (currentRoute == "presupuesto") {
                         IconButton(onClick = { }) {
                             Icon(
                                 imageVector = Icons.Default.AccountCircle,
@@ -96,8 +96,8 @@ fun MainScaffold() {
     ) { innerPadding ->
         val modifier = Modifier.padding(innerPadding)
         when (currentRoute) {
-            "inicio" -> HomeScreen(modifier = modifier)
-            "balance" -> BalanceScreen(modifier = modifier)
+            "balances" -> BalancesScreen(modifier = modifier)
+            "presupuesto" -> BudgetScreen(modifier = modifier)
             "tarjetas" -> CardsScreen(
                 modifier = modifier,
                 onEditCard = { tarjetaId ->
@@ -118,7 +118,7 @@ fun MainScaffold() {
             )
             "nuevo" -> NewMovementScreen(
                 modifier = modifier,
-                onBack = { currentRoute = "balance" }
+                onBack = { currentRoute = "presupuesto" }
             )
             "estadisticas" -> StatsScreen(modifier = modifier)
             "promos" -> PromosScreen(
@@ -148,7 +148,7 @@ fun MainScaffold() {
             "ajustes_permisos" -> PermissionsSettingsScreen(modifier = modifier)
             "ajustes_preferencias" -> AppPreferencesScreen(modifier = modifier)
             "ajustes_ayuda" -> HelpCenterScreen(modifier = modifier, onBack = { currentRoute = "ajustes" })
-            else -> HomeScreen(modifier = modifier)
+            else -> BalancesScreen(modifier = modifier)
         }
     }
 }

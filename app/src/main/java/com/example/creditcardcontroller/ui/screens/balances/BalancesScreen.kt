@@ -1,4 +1,4 @@
-package com.example.creditcardcontroller.ui.screens.home
+package com.example.creditcardcontroller.ui.screens.balances
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,7 +22,7 @@ import com.example.creditcardcontroller.ui.composables.layout.MovementRow
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun BalancesScreen(modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
 
     FinancialSurface(modifier = modifier) {
@@ -84,8 +84,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
 @Preview(showBackground = true)
 @Composable
-fun HomeScreenPreview() {
+fun BalancesScreenPreview() {
     CreditCardControllerTheme {
-        HomeScreen()
+        BalancesScreen()
     }
 }
