@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -30,10 +31,12 @@ fun LimitProgressBar(
     modifier: Modifier = Modifier,
     rightLabel: String? = null,
     labelColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    indicatorColor: Color = MaterialTheme.colorScheme.secondary,
+    indicatorColor: Color? = null,
     trackColor: Color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
     barHeight: Dp = 4.dp
 ) {
+    val finalIndicatorColor = indicatorColor ?: getProgressColor(progress)
+
     Column(modifier = modifier) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -62,11 +65,23 @@ fun LimitProgressBar(
                 .fillMaxWidth()
                 .height(barHeight)
                 .clip(RoundedCornerShape(2.dp)),
-            color = indicatorColor,
+            color = finalIndicatorColor,
             trackColor = trackColor,
             strokeCap = StrokeCap.Round,
             gapSize = 0.dp,
             drawStopIndicator = {}
+        )
+    }
+}
+
+private fun getProgressColor(progress: Float): Color {
+    return if (progress >= 1f) {
+        Color(0xFFF44336) // Rojo
+    } else {
+        lerp(
+            start = Color(0xFF4CAF50), // Verde
+            stop = Color(0xFFFF9800),  // Naranja
+            fraction = progress
         )
     }
 }

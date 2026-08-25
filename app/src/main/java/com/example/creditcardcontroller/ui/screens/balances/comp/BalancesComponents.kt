@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -36,7 +37,9 @@ import java.util.Locale
 
 @Composable
 fun SummaryCard(gastoActual: Double, presupuesto: Double, gastoCuotas: Double, gastoUnPago: Double) {
-    val progress = (gastoActual / presupuesto).coerceIn(0.0, 1.0).toFloat()
+    val rawProgress = if (presupuesto > 0) (gastoActual / presupuesto).toFloat() else 0f
+    val progress = rawProgress.coerceIn(0f, 1f)
+    val mainColor = getProgressColor(rawProgress)
     
     Box(
         modifier = Modifier
@@ -87,7 +90,7 @@ fun SummaryCard(gastoActual: Double, presupuesto: Double, gastoCuotas: Double, g
                         LinearProgressIndicator(
                             progress = { cuotasRatio },
                             modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(6.dp).clip(CircleShape),
-                            color = Color(0xFF4DB6AC),
+                            color = getProgressColor(cuotasRatio),
                             trackColor = Color.White.copy(alpha = 0.2f)
                         )
                     }
@@ -98,7 +101,7 @@ fun SummaryCard(gastoActual: Double, presupuesto: Double, gastoCuotas: Double, g
                         LinearProgressIndicator(
                             progress = { unPagoRatio },
                             modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(6.dp).clip(CircleShape),
-                            color = Color(0xFF4DB6AC),
+                            color = getProgressColor(unPagoRatio),
                             trackColor = Color.White.copy(alpha = 0.2f)
                         )
                     }
@@ -109,13 +112,13 @@ fun SummaryCard(gastoActual: Double, presupuesto: Double, gastoCuotas: Double, g
                 CircularProgressIndicator(
                     progress = { progress },
                     modifier = Modifier.fillMaxSize(),
-                    color = Color(0xFF4DB6AC),
+                    color = mainColor,
                     strokeWidth = 8.dp,
                     trackColor = Color.White.copy(alpha = 0.2f),
                     strokeCap = StrokeCap.Round
                 )
                 Text(
-                    text = "${(progress * 100).toInt()}%",
+                    text = "${(rawProgress * 100).toInt()}%",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
@@ -363,4 +366,16 @@ fun formatDateShort(timestamp: Long): String {
 fun formatDateFull(timestamp: Long): String {
     val date = Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime()
     return date.format(DateTimeFormatter.ofPattern("dd MMM, HH:mm"))
+}
+
+private fun getProgressColor(progress: Float): Color {
+    return if (progress >= 1f) {
+        Color(0xFFF44336) // Rojo si es 100% o más
+    } else {
+        lerp(
+            start = Color(0xFF4CAF50), // Verde
+            stop = Color(0xFFFF9800),  // Naranja
+            fraction = progress
+        )
+    }
 }
