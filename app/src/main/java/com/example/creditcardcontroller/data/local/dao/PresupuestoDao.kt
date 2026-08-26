@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.creditcardcontroller.data.local.entities.PresupuestoEntity
+import com.example.creditcardcontroller.data.local.entities.YearMonthTuple
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -19,6 +20,9 @@ interface PresupuestoDao {
 
     @Query("SELECT * FROM presupuesto_items ORDER BY anio DESC, mes DESC LIMIT 1")
     suspend fun getLastMonthWithData(): PresupuestoEntity?
+
+    @Query("SELECT DISTINCT mes, anio FROM presupuesto_items ORDER BY anio ASC, mes ASC")
+    fun getAvailableMonths(): Flow<List<YearMonthTuple>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: PresupuestoEntity): Long

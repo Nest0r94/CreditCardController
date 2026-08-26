@@ -14,3 +14,8 @@ data class PresupuestoEntity(
     val icono: String,
     val color: String
 )
+
+data class YearMonthTuple(
+    val mes: Int,
+    val anio: Int
+)

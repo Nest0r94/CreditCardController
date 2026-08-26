@@ -24,7 +24,9 @@ fun DateHeader(
     onMonthClick: () -> Unit,
     onYearClick: () -> Unit,
     onPreviousMonth: () -> Unit,
-    onNextMonth: () -> Unit
+    onNextMonth: () -> Unit,
+    prevEnabled: Boolean = true,
+    nextEnabled: Boolean = true
 ) {
     Row(
         modifier = Modifier
@@ -33,11 +35,14 @@ fun DateHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onPreviousMonth) {
+        IconButton(
+            onClick = onPreviousMonth,
+            enabled = prevEnabled
+        ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBackIos,
                 contentDescription = "Mes anterior",
-                tint = MaterialTheme.colorScheme.primary
+                tint = if (prevEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
         }
 
@@ -67,11 +72,14 @@ fun DateHeader(
             )
         }
 
-        IconButton(onClick = onNextMonth) {
+        IconButton(
+            onClick = onNextMonth,
+            enabled = nextEnabled
+        ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = "Mes siguiente",
-                tint = MaterialTheme.colorScheme.primary
+                tint = if (nextEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
         }
     }

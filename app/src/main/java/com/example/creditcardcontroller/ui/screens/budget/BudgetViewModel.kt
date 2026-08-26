@@ -30,6 +30,28 @@ class BudgetViewModel(
     private val _selectedDate = MutableStateFlow(YearMonth.now())
     val selectedDate: StateFlow<YearMonth> = _selectedDate
 
+    val availableMonths: StateFlow<List<YearMonth>> = presupuestoDao.getAvailableMonths()
+        .map { tuples -> tuples.map { YearMonth.of(it.anio, it.mes) } }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    init {
+        checkAndCreateCurrentMonth()
+    }
+
+    private fun checkAndCreateCurrentMonth() {
+        viewModelScope.launch {
+            val now = YearMonth.now()
+            val items = presupuestoDao.getItemsByMonthSync(now.monthValue, now.year)
+            if (items.isEmpty()) {
+                initializeMonth(now)
+            }
+        }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<BudgetUiState> = _selectedDate.flatMapLatest { date ->
         presupuestoDao.getItemsByMonth(date.monthValue, date.year)
@@ -100,7 +122,23 @@ class BudgetViewModel(
     }
 
     fun updateSelectedDate(date: YearMonth) {
-        _selectedDate.value = date
+        if (availableMonths.value.contains(date)) {
+            _selectedDate.value = date
+        }
+    }
+
+    fun navigatePrevious() {
+        val current = _selectedDate.value
+        val available = availableMonths.value
+        val previous = available.filter { it.isBefore(current) }.maxOrNull()
+        previous?.let { _selectedDate.value = it }
+    }
+
+    fun navigateNext() {
+        val current = _selectedDate.value
+        val available = availableMonths.value
+        val next = available.filter { it.isAfter(current) }.minOrNull()
+        next?.let { _selectedDate.value = it }
     }
 
     fun addIncome(titulo: String, monto: Double) {

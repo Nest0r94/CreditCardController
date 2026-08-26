@@ -53,6 +53,7 @@ fun BudgetScreen(
 ) {
     val selectedDate by viewModel.selectedDate.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
+    val availableMonths by viewModel.availableMonths.collectAsState()
 
     var showMonthPicker by remember { mutableStateOf(false) }
     var showYearPicker by remember { mutableStateOf(false) }
@@ -74,8 +75,10 @@ fun BudgetScreen(
                     selectedDate = selectedDate,
                     onMonthClick = { showMonthPicker = true },
                     onYearClick = { showYearPicker = true },
-                    onPreviousMonth = { viewModel.updateSelectedDate(selectedDate.minusMonths(1)) },
-                    onNextMonth = { viewModel.updateSelectedDate(selectedDate.plusMonths(1)) }
+                    onPreviousMonth = { viewModel.navigatePrevious() },
+                    onNextMonth = { viewModel.navigateNext() },
+                    prevEnabled = availableMonths.any { it.isBefore(selectedDate) },
+                    nextEnabled = availableMonths.any { it.isAfter(selectedDate) }
                 )
             }
 
