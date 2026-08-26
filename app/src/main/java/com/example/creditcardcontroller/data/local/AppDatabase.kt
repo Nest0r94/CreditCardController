@@ -8,10 +8,12 @@ import androidx.room.TypeConverters
 import com.example.creditcardcontroller.data.local.dao.CategoriaDao
 import com.example.creditcardcontroller.data.local.dao.DescuentoDao
 import com.example.creditcardcontroller.data.local.dao.MovimientoDao
+import com.example.creditcardcontroller.data.local.dao.PresupuestoDao
 import com.example.creditcardcontroller.data.local.dao.TarjetaDao
 import com.example.creditcardcontroller.data.local.entities.CategoriaEntity
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
+import com.example.creditcardcontroller.data.local.entities.PresupuestoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 
 @Database(
@@ -19,9 +21,10 @@ import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
         MovimientoEntity::class,
         CategoriaEntity::class,
         TarjetaEntity::class,
-        DescuentoEntity::class
+        DescuentoEntity::class,
+        PresupuestoEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -30,6 +33,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun categoriaDao(): CategoriaDao
     abstract fun tarjetaDao(): TarjetaDao
     abstract fun descuentoDao(): DescuentoDao
+    abstract fun presupuestoDao(): PresupuestoDao
 
     suspend fun seedCategoriasSiVacia() {
         if (categoriaDao().count() == 0) {
