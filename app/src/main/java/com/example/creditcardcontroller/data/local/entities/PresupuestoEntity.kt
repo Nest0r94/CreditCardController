@@ -10,10 +10,18 @@ data class PresupuestoEntity(
     val anio: Int,
     val titulo: String,
     val monto: Double,
-    val tipo: String, // "INGRESO" o "GASTO"
+    val tipo: String, // "INGRESO", "GASTO", "LIMITE" o "AHORRO"
     val icono: String,
-    val color: String
-)
+    val color: String,
+    val tarjetaId: Long? = null // Solo para GASTO: null = Cuenta, si no id de la tarjeta
+) {
+    companion object {
+        const val TIPO_INGRESO = "INGRESO"
+        const val TIPO_GASTO = "GASTO"
+        const val TIPO_LIMITE = "LIMITE"
+        const val TIPO_AHORRO = "AHORRO"
+    }
+}
 
 data class YearMonthTuple(
     val mes: Int,

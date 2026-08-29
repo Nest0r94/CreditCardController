@@ -10,19 +10,22 @@ import java.util.Locale
 data class BudgetItemData(
     val id: String,
     val title: String,
+    val subtitle: String? = null,
     val amount: Double,
     val icon: ImageVector,
     val iconBackground: Color
 )
 
-sealed class BudgetEditableItem {
-    data class Income(val entity: PresupuestoEntity) : BudgetEditableItem()
-    data class Expense(val entity: PresupuestoEntity) : BudgetEditableItem()
-}
-
-fun PresupuestoEntity.toBudgetItemData() = BudgetItemData(
+fun PresupuestoEntity.toBudgetItemData(
+    tarjetaNombre: (Long?) -> String? = { null }
+) = BudgetItemData(
     id = id.toString(),
     title = titulo,
+    subtitle = if (tipo == com.example.creditcardcontroller.data.local.entities.PresupuestoEntity.TIPO_GASTO) {
+        tarjetaNombre(tarjetaId) ?: "Cuenta"
+    } else {
+        null
+    },
     amount = monto,
     icon = iconoDeCategoria(icono),
     iconBackground = colorDeCategoria(color)

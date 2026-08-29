@@ -24,7 +24,7 @@ import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
         DescuentoEntity::class,
         PresupuestoEntity::class
     ],
-    version = 2,
+    version = 1,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

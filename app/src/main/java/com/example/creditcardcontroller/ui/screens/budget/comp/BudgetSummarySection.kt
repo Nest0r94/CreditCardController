@@ -24,10 +24,11 @@ import com.example.creditcardcontroller.ui.screens.budget.model.formatAmount
 @Composable
 fun BudgetSummarySection(
     totalIncome: Double,
-    totalExpense: Double
+    gastosChip: Double,
+    ahorroChip: Double
 ) {
-    val savings = totalIncome - totalExpense
     val savingsColor = Color(0xFFFFC107) // Amarillo para Ahorro
+    val expenseColor = Color(0xFFF44336)
 
     Row(
         modifier = Modifier
@@ -50,13 +51,13 @@ fun BudgetSummarySection(
             MetricChip(
                 modifier = Modifier.fillMaxWidth(),
                 title = "Gastos",
-                value = "$ ${formatAmount(totalExpense)}",
-                color = Color(0xFFF44336)
+                value = "$ ${formatAmount(gastosChip)}",
+                color = expenseColor
             )
             MetricChip(
                 modifier = Modifier.fillMaxWidth(),
                 title = "Ahorro",
-                value = "$ ${formatAmount(savings)}",
+                value = "$ ${formatAmount(ahorroChip)}",
                 color = savingsColor
             )
         }
@@ -69,19 +70,19 @@ fun BudgetSummarySection(
             contentAlignment = Alignment.Center
         ) {
             val total = totalIncome.coerceAtLeast(1.0)
-            val expenseAngle = (totalExpense / total * 360f).toFloat().coerceIn(0f, 360f)
+            val expenseAngle = ((gastosChip.coerceAtLeast(0.0)) / total * 360f).toFloat().coerceIn(0f, 360f)
             val savingsAngle = 360f - expenseAngle
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawArc(
-                    color = Color(0xFFF44336),
+                    color = expenseColor,
                     startAngle = -90f,
                     sweepAngle = expenseAngle,
                     useCenter = false,
                     style = Stroke(width = 8.dp.toPx())
                 )
                 drawArc(
-                    color = Color(0xFFFFC107), // Amarillo para la porción de ahorro
+                    color = savingsColor, // Amarillo para la porción de ahorro
                     startAngle = -90f + expenseAngle,
                     sweepAngle = savingsAngle,
                     useCenter = false,
@@ -90,7 +91,7 @@ fun BudgetSummarySection(
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                val percentage = if (totalIncome > 0) (totalExpense / totalIncome * 100).toInt() else 0
+                val percentage = if (totalIncome > 0) (ahorroChip / totalIncome * 100).toInt().coerceIn(0, 100) else 0
                 Text(
                     text = "$percentage%",
                     style = MaterialTheme.typography.titleMedium,
@@ -98,7 +99,7 @@ fun BudgetSummarySection(
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "Gasto",
+                    text = "Ahorro",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

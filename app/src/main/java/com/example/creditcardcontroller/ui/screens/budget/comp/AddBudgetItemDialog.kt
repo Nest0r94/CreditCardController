@@ -2,10 +2,14 @@ package com.example.creditcardcontroller.ui.screens.budget.comp
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -17,24 +21,39 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.creditcardcontroller.data.local.entities.PresupuestoEntity
+import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 
 @Composable
-fun AddExpenseDialog(
+fun AddBudgetItemDialog(
+    tipo: String,
+    tarjetas: List<TarjetaEntity>,
     onDismiss: () -> Unit,
-    onConfirm: (String, Double) -> Unit
+    onConfirm: (titulo: String, monto: Double, tarjetaId: Long?) -> Unit
 ) {
+    val title = when (tipo) {
+        PresupuestoEntity.TIPO_INGRESO -> "Agregar Ingreso"
+        PresupuestoEntity.TIPO_AHORRO -> "Agregar Ahorro"
+        else -> "Agregar Gasto"
+    }
+    val nameLabel = when (tipo) {
+        PresupuestoEntity.TIPO_INGRESO -> "Nombre del ingreso"
+        PresupuestoEntity.TIPO_AHORRO -> "Nombre del ahorro"
+        else -> "Nombre del gasto"
+    }
     var name by remember { mutableStateOf("") }
     var amountText by remember { mutableStateOf("") }
+    var selectedTarjetaId by remember { mutableStateOf<Long?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Agregar Gasto Programado") },
+        title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nombre del gasto") },
+                    label = { Text(nameLabel) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -46,15 +65,34 @@ fun AddExpenseDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (tipo == PresupuestoEntity.TIPO_GASTO) {
+                    HorizontalDivider(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Tipo de gasto",
+                        style = androidx.compose.material3.MaterialTheme.typography.labelLarge
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(
+                            selected = selectedTarjetaId == null,
+                            onClick = { selectedTarjetaId = null },
+                            label = { Text("Cuenta") }
+                        )
+                        tarjetas.forEach { tarjeta ->
+                            FilterChip(
+                                selected = selectedTarjetaId == tarjeta.id,
+                                onClick = { selectedTarjetaId = tarjeta.id },
+                                label = { Text(tarjeta.nombre) }
+                            )
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
                     val amount = amountText.toDoubleOrNull() ?: 0.0
-                    if (name.isNotBlank()) {
-                        onConfirm(name, amount)
-                    }
+                    onConfirm(name, amount, selectedTarjetaId)
                 },
                 enabled = name.isNotBlank() && amountText.isNotBlank()
             ) {
