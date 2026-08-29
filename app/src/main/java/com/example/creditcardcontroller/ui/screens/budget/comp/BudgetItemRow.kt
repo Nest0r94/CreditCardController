@@ -35,7 +35,8 @@ import com.example.creditcardcontroller.ui.screens.budget.model.formatAmount
 @Composable
 fun BudgetItemRow(
     item: BudgetItemData,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    editable: Boolean = true
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -104,16 +105,18 @@ fun BudgetItemRow(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                IconButton(
-                    onClick = onEditClick,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Editar",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
-                    )
+                if (editable) {
+                    IconButton(
+                        onClick = onEditClick,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Editar",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
         }

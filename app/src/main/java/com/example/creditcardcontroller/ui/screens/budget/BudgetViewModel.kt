@@ -36,6 +36,10 @@ class BudgetViewModel(
     private val tarjetaDao: TarjetaDao
 ) : ViewModel() {
 
+    companion object {
+        const val DISPONIBLE_TITULO = "Disponible"
+    }
+
     private val mutex = Mutex()
     private val _selectedDate = MutableStateFlow(YearMonth.now())
     val selectedDate: StateFlow<YearMonth> = _selectedDate
@@ -94,11 +98,17 @@ class BudgetViewModel(
         val gastosChip = totalLimite + gastosCuenta
         val ahorroChip = totalIncome - gastosChip
 
+        val ahorrosUsuario = ahorros.filter { it.titulo != DISPONIBLE_TITULO }
+        val disponibleMonto = totalIncome - gastosChip - ahorrosUsuario.sumOf { it.monto }
+        val ahorrosUi = (listOfNotNull(
+            ahorros.firstOrNull { it.titulo == DISPONIBLE_TITULO }?.copy(monto = disponibleMonto)
+        ) + ahorrosUsuario).distinctBy { it.id }
+
         BudgetUiState(
             incomes = incomes,
             expenses = gastos,
             limites = limites,
-            ahorros = ahorros,
+            ahorros = ahorrosUi,
             tarjetas = tarjetas,
             totalIncome = totalIncome,
             gastosChip = gastosChip,
@@ -162,6 +172,13 @@ class BudgetViewModel(
                 icono = "AccountBalanceWallet", color = "#E57373"
             )
         )
+        presupuestoDao.insert(
+            PresupuestoEntity(
+                mes = date.monthValue, anio = date.year,
+                titulo = DISPONIBLE_TITULO, monto = 0.0, tipo = PresupuestoEntity.TIPO_AHORRO,
+                icono = "AccountBalance", color = "#FFC107"
+            )
+        )
     }
 
     fun updateSelectedDate(date: YearMonth) {
@@ -219,12 +236,14 @@ class BudgetViewModel(
     }
 
     fun updateAmount(item: PresupuestoEntity, newAmount: Double) {
+        if (item.titulo == DISPONIBLE_TITULO) return
         viewModelScope.launch {
             presupuestoDao.update(item.copy(monto = newAmount))
         }
     }
 
     fun deleteItem(item: PresupuestoEntity) {
+        if (item.titulo == DISPONIBLE_TITULO) return
         viewModelScope.launch {
             presupuestoDao.delete(item)
         }
