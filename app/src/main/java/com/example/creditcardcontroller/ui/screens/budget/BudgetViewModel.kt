@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.YearMonth
 
 data class BudgetUiState(
@@ -27,6 +29,7 @@ class BudgetViewModel(
     private val presupuestoDao: PresupuestoDao
 ) : ViewModel() {
 
+    private val mutex = Mutex()
     private val _selectedDate = MutableStateFlow(YearMonth.now())
     val selectedDate: StateFlow<YearMonth> = _selectedDate
 
@@ -39,15 +42,25 @@ class BudgetViewModel(
         )
 
     init {
-        checkAndCreateCurrentMonth()
+        cleanupDuplicates()
     }
 
-    private fun checkAndCreateCurrentMonth() {
+    private fun cleanupDuplicates() {
         viewModelScope.launch {
-            val now = YearMonth.now()
-            val items = presupuestoDao.getItemsByMonthSync(now.monthValue, now.year)
-            if (items.isEmpty()) {
-                initializeMonth(now)
+            mutex.withLock {
+                val allItems = presupuestoDao.getAllItemsSync()
+                // Agrupamos por título, tipo, mes y año (ignorando monto para detectar fantasmas)
+                val grouped = allItems.groupBy {
+                    "${it.titulo}-${it.tipo}-${it.mes}-${it.anio}"
+                }
+                grouped.forEach { (_, items) ->
+                    if (items.size > 1) {
+                        // Si hay duplicados, preferimos el que tiene monto > 0
+                        val sortedItems = items.sortedByDescending { it.monto }
+                        // Conservamos el mejor y borramos el resto
+                        sortedItems.drop(1).forEach { presupuestoDao.delete(it) }
+                    }
+                }
             }
         }
     }
@@ -76,23 +89,25 @@ class BudgetViewModel(
 
     private fun initializeMonth(date: YearMonth) {
         viewModelScope.launch {
-            // Verificamos si realmente está vacío
-            val currentItems = presupuestoDao.getItemsByMonthSync(date.monthValue, date.year)
-            if (currentItems.isNotEmpty()) return@launch
+            mutex.withLock {
+                // Verificamos si realmente está vacío
+                val currentItems = presupuestoDao.getItemsByMonthSync(date.monthValue, date.year)
+                if (currentItems.isNotEmpty()) return@withLock
 
-            val lastMonth = presupuestoDao.getLastMonthWithData()
-            
-            if (lastMonth != null) {
-                // Copiar del mes más reciente con datos
-                val itemsToCopy = presupuestoDao.getItemsByMonthSync(lastMonth.mes, lastMonth.anio)
-                itemsToCopy.forEach { item ->
-                    presupuestoDao.insert(
-                        item.copy(id = 0, mes = date.monthValue, anio = date.year)
-                    )
+                val lastMonth = presupuestoDao.getLastMonthWithData()
+
+                if (lastMonth != null) {
+                    // Copiar del mes más reciente con datos
+                    val itemsToCopy = presupuestoDao.getItemsByMonthSync(lastMonth.mes, lastMonth.anio)
+                    itemsToCopy.forEach { item ->
+                        presupuestoDao.insert(
+                            item.copy(id = 0, mes = date.monthValue, anio = date.year)
+                        )
+                    }
+                } else {
+                    // Seed inicial con los 3 montos troncales si es la primera vez en la app
+                    seedDefaultItems(date)
                 }
-            } else {
-                // Seed inicial con los 3 montos troncales si es la primera vez en la app
-                seedDefaultItems(date)
             }
         }
     }

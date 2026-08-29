@@ -18,6 +18,9 @@ interface PresupuestoDao {
     @Query("SELECT * FROM presupuesto_items WHERE mes = :mes AND anio = :anio")
     suspend fun getItemsByMonthSync(mes: Int, anio: Int): List<PresupuestoEntity>
 
+    @Query("SELECT * FROM presupuesto_items")
+    suspend fun getAllItemsSync(): List<PresupuestoEntity>
+
     @Query("SELECT * FROM presupuesto_items ORDER BY anio DESC, mes DESC LIMIT 1")
     suspend fun getLastMonthWithData(): PresupuestoEntity?
 
