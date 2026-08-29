@@ -235,10 +235,10 @@ class BudgetViewModel(
         }
     }
 
-    fun updateAmount(item: PresupuestoEntity, newAmount: Double) {
+    fun updateItem(item: PresupuestoEntity, newAmount: Double, newTarjetaId: Long? = null) {
         if (item.titulo == DISPONIBLE_TITULO) return
         viewModelScope.launch {
-            presupuestoDao.update(item.copy(monto = newAmount))
+            presupuestoDao.update(item.copy(monto = newAmount, tarjetaId = if (item.tipo == PresupuestoEntity.TIPO_GASTO) newTarjetaId else item.tarjetaId))
         }
     }
 

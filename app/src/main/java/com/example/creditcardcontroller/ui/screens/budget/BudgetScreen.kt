@@ -233,9 +233,12 @@ fun BudgetScreen(
         EditAmountDialog(
             title = "Editar ${entity.titulo}",
             initialAmount = entity.monto,
+            tipo = entity.tipo,
+            initialTarjetaId = entity.tarjetaId,
+            tarjetas = uiState.tarjetas,
             onDismiss = { editingItem = null },
-            onConfirm = { newAmount ->
-                viewModel.updateAmount(entity, newAmount)
+            onConfirm = { newAmount, newTarjetaId ->
+                viewModel.updateItem(entity, newAmount, newTarjetaId)
                 editingItem = null
             }
         )
