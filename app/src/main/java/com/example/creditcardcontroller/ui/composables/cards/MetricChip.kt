@@ -33,7 +33,7 @@ fun MetricChip(
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.16f))
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(8.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,

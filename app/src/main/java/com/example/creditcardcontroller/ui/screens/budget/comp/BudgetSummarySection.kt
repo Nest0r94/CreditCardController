@@ -32,14 +32,14 @@ fun BudgetSummarySection(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Table/Grid of metrics
         Column(
-            modifier = Modifier.weight(1.2f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.weight(1.1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             MetricChip(
                 modifier = Modifier.fillMaxWidth(),
@@ -64,7 +64,7 @@ fun BudgetSummarySection(
         // Pie Chart
         Box(
             modifier = Modifier
-                .weight(1f)
+                .weight(0.9f)
                 .aspectRatio(1f),
             contentAlignment = Alignment.Center
         ) {
@@ -78,14 +78,14 @@ fun BudgetSummarySection(
                     startAngle = -90f,
                     sweepAngle = expenseAngle,
                     useCenter = false,
-                    style = Stroke(width = 12.dp.toPx())
+                    style = Stroke(width = 8.dp.toPx())
                 )
                 drawArc(
                     color = Color(0xFFFFC107), // Amarillo para la porción de ahorro
                     startAngle = -90f + expenseAngle,
                     sweepAngle = savingsAngle,
                     useCenter = false,
-                    style = Stroke(width = 12.dp.toPx())
+                    style = Stroke(width = 8.dp.toPx())
                 )
             }
 

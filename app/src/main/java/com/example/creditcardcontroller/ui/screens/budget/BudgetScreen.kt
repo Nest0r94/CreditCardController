@@ -68,7 +68,7 @@ fun BudgetScreen(
                 .fillMaxSize()
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp, top = 16.dp)
+            contentPadding = PaddingValues(bottom = 24.dp, top = 8.dp)
         ) {
             item {
                 DateHeader(
