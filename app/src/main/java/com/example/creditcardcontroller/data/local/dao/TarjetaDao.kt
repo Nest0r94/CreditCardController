@@ -9,8 +9,14 @@ interface TarjetaDao {
     @Query("SELECT * FROM tarjetas ORDER BY nombre ASC")
     fun getAllTarjetas(): Flow<List<TarjetaEntity>>
 
+    @Query("SELECT * FROM tarjetas ORDER BY nombre ASC")
+    suspend fun getAllSync(): List<TarjetaEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(tarjeta: TarjetaEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(tarjetas: List<TarjetaEntity>)
 
     @Update
     suspend fun update(tarjeta: TarjetaEntity)
@@ -20,4 +26,7 @@ interface TarjetaDao {
 
     @Query("SELECT * FROM tarjetas WHERE id = :id")
     suspend fun getById(id: Long): TarjetaEntity?
+
+    @Query("DELETE FROM tarjetas")
+    suspend fun clearAll()
 }

@@ -9,6 +9,9 @@ interface CategoriaDao {
     @Query("SELECT * FROM categorias ORDER BY id ASC")
     fun getAllCategorias(): Flow<List<CategoriaEntity>>
 
+    @Query("SELECT * FROM categorias ORDER BY id ASC")
+    suspend fun getAllSync(): List<CategoriaEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(categoria: CategoriaEntity)
 
@@ -26,4 +29,7 @@ interface CategoriaDao {
 
     @Query("SELECT * FROM categorias WHERE id = :id")
     suspend fun getById(id: Long): CategoriaEntity?
+
+    @Query("DELETE FROM categorias")
+    suspend fun clearAll()
 }

@@ -21,6 +21,12 @@ interface PresupuestoDao {
     @Query("SELECT * FROM presupuesto_items")
     suspend fun getAllItemsSync(): List<PresupuestoEntity>
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(items: List<PresupuestoEntity>)
+
+    @Query("DELETE FROM presupuesto_items")
+    suspend fun clearAll()
+
     @Query("SELECT * FROM presupuesto_items ORDER BY anio DESC, mes DESC LIMIT 1")
     suspend fun getLastMonthWithData(): PresupuestoEntity?
 

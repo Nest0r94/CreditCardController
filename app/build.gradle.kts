@@ -70,4 +70,7 @@ dependencies {
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)
+
+    // Gson (backup/restore JSON)
+    implementation(libs.gson)
 }
