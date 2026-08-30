@@ -20,6 +20,7 @@ import com.example.creditcardcontroller.data.local.AppTheme
 import com.example.creditcardcontroller.data.local.SettingsDataStore
 import com.example.creditcardcontroller.ui.scaffold.MainScaffold
 import com.example.creditcardcontroller.ui.screens.login.LoginScreen
+import com.example.creditcardcontroller.ui.screens.onboarding.OnboardingScreen
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
 class MainActivity : FragmentActivity() {
@@ -37,6 +38,7 @@ class MainActivity : FragmentActivity() {
             val theme by settingsDataStore.themeFlow.collectAsState(initial = AppTheme.SYSTEM)
             val biometricEnabled by settingsDataStore.biometricEnabledFlow.collectAsState(initial = null)
             val autoLockEnabled by settingsDataStore.autoLockEnabledFlow.collectAsState(initial = false)
+            val onboardingCompleted by settingsDataStore.onboardingCompletedFlow.collectAsState(initial = null)
             
             var isAuthenticated by remember { mutableStateOf(false) }
             
@@ -62,7 +64,7 @@ class MainActivity : FragmentActivity() {
                 }
             }
 
-            if (biometricEnabled == null) return@setContent
+            if (biometricEnabled == null || onboardingCompleted == null) return@setContent
 
             val darkTheme = when (theme) {
                 AppTheme.LIGHT -> false
@@ -71,7 +73,9 @@ class MainActivity : FragmentActivity() {
             }
 
             CreditCardControllerTheme(darkTheme = darkTheme) {
-                if (biometricEnabled == true && !isAuthenticated) {
+                if (onboardingCompleted == false) {
+                    OnboardingScreen(onFinished = { /* State will update automatically via Flow */ })
+                } else if (biometricEnabled == true && !isAuthenticated) {
                     LoginScreen(onAuthenticated = { isAuthenticated = true })
                 } else {
                     MainScaffold()
