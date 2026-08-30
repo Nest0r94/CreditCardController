@@ -22,4 +22,14 @@ class Converters {
     fun toListLong(value: String?): List<Long>? {
         return value?.split(",")?.filter { it.isNotEmpty() }?.map { it.toLong() }
     }
+
+    @TypeConverter
+    fun fromTipoMedioPago(value: TipoMedioPago?): String? {
+        return value?.name
+    }
+
+    @TypeConverter
+    fun toTipoMedioPago(value: String?): TipoMedioPago? {
+        return value?.let { TipoMedioPago.valueOf(it) }
+    }
 }

@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -37,7 +38,8 @@ fun OfferDropdown(
     selectedOption: String,
     onOptionSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector = Icons.Default.KeyboardArrowDown
+    icon: ImageVector = Icons.Default.KeyboardArrowDown,
+    enabled: Boolean = true
 ) {
     var expanded by remember { mutableStateOf(false) }
     Column(modifier = modifier) {
@@ -54,7 +56,8 @@ fun OfferDropdown(
                     .height(56.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    .clickable { expanded = true }
+                    .alpha(if (enabled) 1f else 0.5f)
+                    .clickable(enabled = enabled) { expanded = true }
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween

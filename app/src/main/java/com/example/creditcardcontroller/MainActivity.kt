@@ -31,6 +31,7 @@ class MainActivity : FragmentActivity() {
 
             LaunchedEffect(Unit) {
                 AppDatabase.getDatabase(applicationContext).seedCategoriasSiVacia()
+                AppDatabase.getDatabase(applicationContext).seedTarjetaCuentaSiVacia()
             }
 
             val theme by settingsDataStore.themeFlow.collectAsState(initial = AppTheme.SYSTEM)

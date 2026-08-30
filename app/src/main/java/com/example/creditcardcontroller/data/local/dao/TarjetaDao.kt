@@ -27,6 +27,9 @@ interface TarjetaDao {
     @Query("SELECT * FROM tarjetas WHERE id = :id")
     suspend fun getById(id: Long): TarjetaEntity?
 
+    @Query("SELECT COUNT(*) FROM tarjetas")
+    suspend fun count(): Int
+
     @Query("DELETE FROM tarjetas")
     suspend fun clearAll()
 }

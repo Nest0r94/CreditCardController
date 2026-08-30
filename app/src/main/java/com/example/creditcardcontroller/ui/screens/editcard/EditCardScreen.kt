@@ -27,11 +27,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.creditcardcontroller.data.local.AppDatabase
+import com.example.creditcardcontroller.data.local.TipoMedioPago
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.composables.cards.CardStatusPreview
 import com.example.creditcardcontroller.ui.composables.inputs.FormInput
 import com.example.creditcardcontroller.ui.composables.inputs.OfferDateField
+import com.example.creditcardcontroller.ui.composables.inputs.OfferDropdown
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 import com.example.creditcardcontroller.ui.util.diaDeFecha
 import com.example.creditcardcontroller.ui.util.proximaFechaDeDiaUtc
@@ -49,6 +51,7 @@ fun EditCardScreen(
     val scope = rememberCoroutineScope()
 
     var cardName by remember { mutableStateOf("") }
+    var cardTipo by remember { mutableStateOf(TipoMedioPago.CREDITO) }
     var monthlyLimit by remember { mutableStateOf("") }
     var installmentsLimit by remember { mutableStateOf("") }
     var closingDate by remember { mutableStateOf<Long?>(null) }
@@ -59,10 +62,11 @@ fun EditCardScreen(
         if (tarjetaId != null) {
             tarjetaDao.getById(tarjetaId)?.let { tarjeta ->
                 cardName = tarjeta.nombre
-                monthlyLimit = formatAmount(tarjeta.limiteMensual)
-                installmentsLimit = formatAmount(tarjeta.limiteCuotas)
-                closingDate = tarjeta.diaCierreResumen.takeIf { it in 1..31 }?.let { proximaFechaDeDiaUtc(it) }
-                dueDate = tarjeta.diaVencimientoResumen.takeIf { it in 1..31 }?.let { proximaFechaDeDiaUtc(it) }
+                cardTipo = tarjeta.tipo
+                monthlyLimit = tarjeta.limiteMensual?.let { formatAmount(it) } ?: ""
+                installmentsLimit = tarjeta.limiteCuotas?.let { formatAmount(it) } ?: ""
+                closingDate = tarjeta.diaCierreResumen?.takeIf { it in 1..31 }?.let { proximaFechaDeDiaUtc(it) }
+                dueDate = tarjeta.diaVencimientoResumen?.takeIf { it in 1..31 }?.let { proximaFechaDeDiaUtc(it) }
                 cardExpiration = tarjeta.vencimientoTarjeta
             }
         }
@@ -72,10 +76,11 @@ fun EditCardScreen(
         val nombre = cardName.trim()
         if (nombre.isEmpty()) return
 
-        val limiteMensual = parseAmount(monthlyLimit)
-        val limiteCuotas = parseAmount(installmentsLimit)
-        val diaCierre = closingDate?.let { diaDeFecha(it) } ?: 1
-        val diaVencimiento = dueDate?.let { diaDeFecha(it) } ?: 1
+        val esCredito = cardTipo == TipoMedioPago.CREDITO
+        val limiteMensual = if (esCredito) parseAmount(monthlyLimit) else null
+        val limiteCuotas = if (esCredito) parseAmount(installmentsLimit) else null
+        val diaCierre = if (esCredito) closingDate?.let { diaDeFecha(it) } else null
+        val diaVencimiento = if (esCredito) dueDate?.let { diaDeFecha(it) } else null
         val vencimientoTarjeta = cardExpiration ?: 0L
 
         scope.launch {
@@ -83,6 +88,7 @@ fun EditCardScreen(
                 tarjetaDao.insert(
                     TarjetaEntity(
                         nombre = nombre,
+                        tipo = cardTipo,
                         limiteMensual = limiteMensual,
                         limiteCuotas = limiteCuotas,
                         diaCierreResumen = diaCierre,
@@ -95,6 +101,7 @@ fun EditCardScreen(
                     tarjetaDao.update(
                         existing.copy(
                             nombre = nombre,
+                            tipo = cardTipo,
                             limiteMensual = limiteMensual,
                             limiteCuotas = limiteCuotas,
                             diaCierreResumen = diaCierre,
@@ -143,31 +150,43 @@ fun EditCardScreen(
                 icon = Icons.Default.CreditCard
             )
 
-            FormInput(
-                label = "Límite mensual",
-                value = monthlyLimit,
-                onValueChange = { monthlyLimit = it },
-                icon = Icons.Default.Payments
+            OfferDropdown(
+                label = "Tipo de medio de pago",
+                options = listOf("CREDITO", "DEBITO"),
+                selectedOption = cardTipo.name,
+                onOptionSelected = { selected ->
+                    cardTipo = TipoMedioPago.valueOf(selected)
+                },
+                enabled = cardTipo != TipoMedioPago.CUENTA
             )
 
-            FormInput(
-                label = "Límite en cuotas",
-                value = installmentsLimit,
-                onValueChange = { installmentsLimit = it },
-                icon = Icons.Default.Payments
-            )
+            if (cardTipo == TipoMedioPago.CREDITO) {
+                FormInput(
+                    label = "Límite mensual",
+                    value = monthlyLimit,
+                    onValueChange = { monthlyLimit = it },
+                    icon = Icons.Default.Payments
+                )
 
-            OfferDateField(
-                label = "Fecha de cierre",
-                selectedDateMillis = closingDate,
-                onDateSelected = { closingDate = it }
-            )
+                FormInput(
+                    label = "Límite en cuotas",
+                    value = installmentsLimit,
+                    onValueChange = { installmentsLimit = it },
+                    icon = Icons.Default.Payments
+                )
 
-            OfferDateField(
-                label = "Fecha de vencimiento",
-                selectedDateMillis = dueDate,
-                onDateSelected = { dueDate = it }
-            )
+                OfferDateField(
+                    label = "Fecha de cierre",
+                    selectedDateMillis = closingDate,
+                    onDateSelected = { closingDate = it }
+                )
+
+                OfferDateField(
+                    label = "Fecha de vencimiento",
+                    selectedDateMillis = dueDate,
+                    onDateSelected = { dueDate = it }
+                )
+            }
 
             OfferDateField(
                 label = "Fecha de vencimiento de tarjeta",

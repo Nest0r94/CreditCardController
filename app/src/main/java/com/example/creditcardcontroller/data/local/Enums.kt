@@ -11,3 +11,7 @@ enum class TipoDescuento {
 enum class AppTheme {
     LIGHT, DARK, SYSTEM
 }
+
+enum class TipoMedioPago {
+    CUENTA, CREDITO, DEBITO
+}

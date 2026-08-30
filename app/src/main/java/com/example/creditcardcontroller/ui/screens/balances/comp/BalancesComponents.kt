@@ -151,7 +151,7 @@ fun CardItem(tarjeta: TarjetaEntity) {
                 color = Color(0xFF78909C)
             )
             Text(
-                text = formatCurrency(tarjeta.limiteMensual), // Simplified
+                text = tarjeta.limiteMensual?.let { formatCurrency(it) } ?: "-", // Simplified
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF37474F)
@@ -162,12 +162,12 @@ fun CardItem(tarjeta: TarjetaEntity) {
             Row {
                 Column {
                     Text("CIERRE", style = MaterialTheme.typography.labelSmall, color = Color(0xFF78909C))
-                    Text(formatDateShort(proximaFechaDeDia(tarjeta.diaCierreResumen)), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF37474F))
+                    Text(tarjeta.diaCierreResumen?.let { formatDateShort(proximaFechaDeDia(it)) } ?: "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF37474F))
                 }
                 Spacer(modifier = Modifier.width(24.dp))
                 Column {
                     Text("VENCE", style = MaterialTheme.typography.labelSmall, color = Color(0xFF78909C))
-                    Text(formatDateShort(proximaFechaDeDia(tarjeta.diaVencimientoResumen)), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF37474F))
+                    Text(tarjeta.diaVencimientoResumen?.let { formatDateShort(proximaFechaDeDia(it)) } ?: "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF37474F))
                 }
             }
         }

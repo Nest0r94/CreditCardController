@@ -27,7 +27,7 @@ import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
         PresupuestoEntity::class,
         ResumenEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -42,6 +42,17 @@ abstract class AppDatabase : RoomDatabase() {
     suspend fun seedCategoriasSiVacia() {
         if (categoriaDao().count() == 0) {
             categoriaDao().insertAll(DefaultCategorias.lista)
+        }
+    }
+
+    suspend fun seedTarjetaCuentaSiVacia() {
+        if (tarjetaDao().count() == 0) {
+            tarjetaDao().insert(
+                TarjetaEntity(
+                    nombre = "Cuenta",
+                    tipo = TipoMedioPago.CUENTA
+                )
+            )
         }
     }
 
