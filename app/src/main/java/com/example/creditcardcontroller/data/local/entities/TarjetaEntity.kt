@@ -9,7 +9,7 @@ data class TarjetaEntity(
     val nombre: String,
     val limiteMensual: Double,
     val limiteCuotas: Double,
-    val fechaCierreResumen: Long,
-    val fechaVencimientoResumen: Long,
+    val diaCierreResumen: Int,
+    val diaVencimientoResumen: Int,
     val vencimientoTarjeta: Long
 )

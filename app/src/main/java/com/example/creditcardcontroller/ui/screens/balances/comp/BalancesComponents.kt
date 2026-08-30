@@ -29,6 +29,7 @@ import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 import com.example.creditcardcontroller.ui.composables.categories.colorDeCategoria
 import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategoria
+import com.example.creditcardcontroller.ui.util.proximaFechaDeDia
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.ZoneId
@@ -161,12 +162,12 @@ fun CardItem(tarjeta: TarjetaEntity) {
             Row {
                 Column {
                     Text("CIERRE", style = MaterialTheme.typography.labelSmall, color = Color(0xFF78909C))
-                    Text(formatDateShort(tarjeta.fechaCierreResumen), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF37474F))
+                    Text(formatDateShort(proximaFechaDeDia(tarjeta.diaCierreResumen)), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF37474F))
                 }
                 Spacer(modifier = Modifier.width(24.dp))
                 Column {
                     Text("VENCE", style = MaterialTheme.typography.labelSmall, color = Color(0xFF78909C))
-                    Text(formatDateShort(tarjeta.fechaVencimientoResumen), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF37474F))
+                    Text(formatDateShort(proximaFechaDeDia(tarjeta.diaVencimientoResumen)), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF37474F))
                 }
             }
         }

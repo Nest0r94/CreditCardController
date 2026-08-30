@@ -9,11 +9,13 @@ import com.example.creditcardcontroller.data.local.dao.CategoriaDao
 import com.example.creditcardcontroller.data.local.dao.DescuentoDao
 import com.example.creditcardcontroller.data.local.dao.MovimientoDao
 import com.example.creditcardcontroller.data.local.dao.PresupuestoDao
+import com.example.creditcardcontroller.data.local.dao.ResumenDao
 import com.example.creditcardcontroller.data.local.dao.TarjetaDao
 import com.example.creditcardcontroller.data.local.entities.CategoriaEntity
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.PresupuestoEntity
+import com.example.creditcardcontroller.data.local.entities.ResumenEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 
 @Database(
@@ -22,7 +24,8 @@ import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
         CategoriaEntity::class,
         TarjetaEntity::class,
         DescuentoEntity::class,
-        PresupuestoEntity::class
+        PresupuestoEntity::class,
+        ResumenEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -34,6 +37,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun tarjetaDao(): TarjetaDao
     abstract fun descuentoDao(): DescuentoDao
     abstract fun presupuestoDao(): PresupuestoDao
+    abstract fun resumenDao(): ResumenDao
 
     suspend fun seedCategoriasSiVacia() {
         if (categoriaDao().count() == 0) {

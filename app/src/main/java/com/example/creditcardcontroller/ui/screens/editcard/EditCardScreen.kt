@@ -33,6 +33,8 @@ import com.example.creditcardcontroller.ui.composables.cards.CardStatusPreview
 import com.example.creditcardcontroller.ui.composables.inputs.FormInput
 import com.example.creditcardcontroller.ui.composables.inputs.OfferDateField
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
+import com.example.creditcardcontroller.ui.util.diaDeFecha
+import com.example.creditcardcontroller.ui.util.proximaFechaDeDiaUtc
 import kotlinx.coroutines.launch
 
 @Composable
@@ -59,8 +61,8 @@ fun EditCardScreen(
                 cardName = tarjeta.nombre
                 monthlyLimit = formatAmount(tarjeta.limiteMensual)
                 installmentsLimit = formatAmount(tarjeta.limiteCuotas)
-                closingDate = tarjeta.fechaCierreResumen
-                dueDate = tarjeta.fechaVencimientoResumen
+                closingDate = tarjeta.diaCierreResumen.takeIf { it in 1..31 }?.let { proximaFechaDeDiaUtc(it) }
+                dueDate = tarjeta.diaVencimientoResumen.takeIf { it in 1..31 }?.let { proximaFechaDeDiaUtc(it) }
                 cardExpiration = tarjeta.vencimientoTarjeta
             }
         }
@@ -72,8 +74,8 @@ fun EditCardScreen(
 
         val limiteMensual = parseAmount(monthlyLimit)
         val limiteCuotas = parseAmount(installmentsLimit)
-        val fechaCierre = closingDate ?: 0L
-        val fechaVencimiento = dueDate ?: 0L
+        val diaCierre = closingDate?.let { diaDeFecha(it) } ?: 1
+        val diaVencimiento = dueDate?.let { diaDeFecha(it) } ?: 1
         val vencimientoTarjeta = cardExpiration ?: 0L
 
         scope.launch {
@@ -83,8 +85,8 @@ fun EditCardScreen(
                         nombre = nombre,
                         limiteMensual = limiteMensual,
                         limiteCuotas = limiteCuotas,
-                        fechaCierreResumen = fechaCierre,
-                        fechaVencimientoResumen = fechaVencimiento,
+                        diaCierreResumen = diaCierre,
+                        diaVencimientoResumen = diaVencimiento,
                         vencimientoTarjeta = vencimientoTarjeta
                     )
                 )
@@ -95,8 +97,8 @@ fun EditCardScreen(
                             nombre = nombre,
                             limiteMensual = limiteMensual,
                             limiteCuotas = limiteCuotas,
-                            fechaCierreResumen = fechaCierre,
-                            fechaVencimientoResumen = fechaVencimiento,
+                            diaCierreResumen = diaCierre,
+                            diaVencimientoResumen = diaVencimiento,
                             vencimientoTarjeta = vencimientoTarjeta
                         )
                     )

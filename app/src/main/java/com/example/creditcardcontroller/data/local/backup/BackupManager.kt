@@ -20,7 +20,8 @@ class BackupManager(private val db: AppDatabase) {
             tarjetas = db.tarjetaDao().getAllSync(),
             descuentos = db.descuentoDao().getAllSync(),
             movimientos = db.movimientoDao().getAllSync(),
-            presupuesto = db.presupuestoDao().getAllItemsSync()
+            presupuesto = db.presupuestoDao().getAllItemsSync(),
+            resumenes = db.resumenDao().getAllSync()
         )
         gson.toJson(data)
     }
@@ -35,6 +36,7 @@ class BackupManager(private val db: AppDatabase) {
                 db.descuentoDao().clearAll()
                 db.movimientoDao().clearAll()
                 db.presupuestoDao().clearAll()
+                db.resumenDao().clearAll()
 
                 if (data.categorias.isNotEmpty()) {
                     db.categoriaDao().insertAll(data.categorias)
@@ -50,6 +52,9 @@ class BackupManager(private val db: AppDatabase) {
                 }
                 if (data.presupuesto.isNotEmpty()) {
                     db.presupuestoDao().insertAll(data.presupuesto)
+                }
+                if (data.resumenes.isNotEmpty()) {
+                    db.resumenDao().insertAll(data.resumenes)
                 }
             }
             true
