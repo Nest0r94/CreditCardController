@@ -74,7 +74,9 @@ fun BalancesScreen(
                     gastoActual = state.gastoMensual,
                     presupuesto = state.totalPresupuesto,
                     gastoCuotas = state.gastoCuotas,
-                    gastoUnPago = state.gastoUnPago
+                    gastoUnPago = state.gastoUnPago,
+                    limiteCuotas = state.limiteCuotas,
+                    limiteUnPago = state.limiteUnPago
                 )
             }
 

@@ -31,7 +31,9 @@ data class BalancesUiState(
     val totalPresupuesto: Double = 0.0,
     val gastoMensual: Double = 0.0,
     val gastoCuotas: Double = 0.0,
-    val gastoUnPago: Double = 0.0
+    val gastoUnPago: Double = 0.0,
+    val limiteCuotas: Double = 0.0,
+    val limiteUnPago: Double = 0.0
 )
 
 class BalancesViewModel(
@@ -73,6 +75,19 @@ class BalancesViewModel(
             it.tipo == PresupuestoEntity.TIPO_INGRESO 
         }.sumOf { it.monto }
 
+        val itemsPresupuesto = presupuestos.filter {
+            it.mes == selectedDate.monthValue &&
+            it.anio == selectedDate.year
+        }
+
+        val limiteUnPago = itemsPresupuesto.find { 
+            it.tipo == PresupuestoEntity.TIPO_LIMITE && it.titulo.contains("1 cuota", ignoreCase = true) 
+        }?.monto ?: 0.0
+
+        val limiteCuotas = itemsPresupuesto.find { 
+            it.tipo == PresupuestoEntity.TIPO_LIMITE && it.titulo.contains("mensual", ignoreCase = true) 
+        }?.monto ?: 0.0
+
         val filteredMovimientos = if (selectedId == null) {
             movimientosMes
         } else {
@@ -88,7 +103,9 @@ class BalancesViewModel(
             totalPresupuesto = totalPresupuesto,
             gastoMensual = totalGasto,
             gastoCuotas = gastoCuotas,
-            gastoUnPago = gastoUnPago
+            gastoUnPago = gastoUnPago,
+            limiteCuotas = limiteCuotas,
+            limiteUnPago = limiteUnPago
         )
     }.stateIn(
         scope = viewModelScope,

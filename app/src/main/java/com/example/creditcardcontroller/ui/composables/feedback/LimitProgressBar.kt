@@ -30,6 +30,7 @@ fun LimitProgressBar(
     leftLabel: String,
     modifier: Modifier = Modifier,
     rightLabel: String? = null,
+    bottomLabel: String? = null,
     labelColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     indicatorColor: Color? = null,
     trackColor: Color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
@@ -38,26 +39,27 @@ fun LimitProgressBar(
     val finalIndicatorColor = indicatorColor ?: getProgressColor(progress)
 
     Column(modifier = modifier) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom
-        ) {
-            Text(
-                text = leftLabel,
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                color = labelColor
-            )
-            if (rightLabel != null) {
+        if (leftLabel.isNotEmpty() || rightLabel != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ) {
                 Text(
-                    text = rightLabel,
+                    text = leftLabel,
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                     color = labelColor
                 )
+                if (rightLabel != null) {
+                    Text(
+                        text = rightLabel,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = labelColor
+                    )
+                }
             }
+            Spacer(modifier = Modifier.height(4.dp))
         }
-
-        Spacer(modifier = Modifier.height(4.dp))
 
         LinearProgressIndicator(
             progress = { progress.coerceIn(0f, 1f) },
@@ -71,6 +73,16 @@ fun LimitProgressBar(
             gapSize = 0.dp,
             drawStopIndicator = {}
         )
+
+        if (bottomLabel != null) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = bottomLabel,
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                color = labelColor,
+                modifier = Modifier.align(Alignment.Start)
+            )
+        }
     }
 }
 

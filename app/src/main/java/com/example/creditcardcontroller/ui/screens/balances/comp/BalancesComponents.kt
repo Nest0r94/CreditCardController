@@ -29,6 +29,7 @@ import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 import com.example.creditcardcontroller.ui.composables.categories.colorDeCategoria
 import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategoria
+import com.example.creditcardcontroller.ui.composables.feedback.LimitProgressBar
 import com.example.creditcardcontroller.ui.util.proximaFechaDeDia
 import java.text.NumberFormat
 import java.time.Instant
@@ -37,7 +38,14 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
-fun SummaryCard(gastoActual: Double, presupuesto: Double, gastoCuotas: Double, gastoUnPago: Double) {
+fun SummaryCard(
+    gastoActual: Double, 
+    presupuesto: Double, 
+    gastoCuotas: Double, 
+    gastoUnPago: Double,
+    limiteCuotas: Double,
+    limiteUnPago: Double
+) {
     val rawProgress = if (presupuesto > 0) (gastoActual / presupuesto).toFloat() else 0f
     val progress = rawProgress.coerceIn(0f, 1f)
     val mainColor = getProgressColor(rawProgress)
@@ -45,7 +53,7 @@ fun SummaryCard(gastoActual: Double, presupuesto: Double, gastoCuotas: Double, g
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .height(210.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(
                 Brush.verticalGradient(
@@ -81,35 +89,50 @@ fun SummaryCard(gastoActual: Double, presupuesto: Double, gastoCuotas: Double, g
                 Spacer(modifier = Modifier.weight(1f))
                 
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    val totalGastoCalculado = gastoCuotas + gastoUnPago
-                    val cuotasRatio = if (totalGastoCalculado > 0) (gastoCuotas / totalGastoCalculado).toFloat() else 0f
-                    val unPagoRatio = if (totalGastoCalculado > 0) (gastoUnPago / totalGastoCalculado).toFloat() else 0f
+                    val cuotasRatio = if (limiteCuotas > 0) (gastoCuotas / limiteCuotas).toFloat() else 0f
+                    val unPagoRatio = if (limiteUnPago > 0) (gastoUnPago / limiteUnPago).toFloat() else 0f
 
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("GASTO EN CUOTAS", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
-                        Text(formatCurrency(gastoCuotas), style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
-                        LinearProgressIndicator(
-                            progress = { cuotasRatio },
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(6.dp).clip(CircleShape),
-                            color = getProgressColor(cuotasRatio),
-                            trackColor = Color.White.copy(alpha = 0.2f)
+                        Text(
+                            text = "GASTO EN CUOTAS",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontWeight = FontWeight.Bold
+                        )
+                        LimitProgressBar(
+                            progress = cuotasRatio,
+                            leftLabel = formatCurrency(gastoCuotas),
+                            bottomLabel = "TOTAL ${formatCurrency(limiteCuotas)}",
+                            modifier = Modifier.fillMaxWidth(),
+                            labelColor = Color.White,
+                            trackColor = Color.White.copy(alpha = 0.2f),
+                            barHeight = 6.dp
                         )
                     }
+                    
                     Spacer(modifier = Modifier.width(16.dp))
+                    
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("GASTO EN UN PAGO", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
-                        Text(formatCurrency(gastoUnPago), style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
-                        LinearProgressIndicator(
-                            progress = { unPagoRatio },
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(6.dp).clip(CircleShape),
-                            color = getProgressColor(unPagoRatio),
-                            trackColor = Color.White.copy(alpha = 0.2f)
+                        Text(
+                            text = "GASTO EN UN PAGO",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontWeight = FontWeight.Bold
+                        )
+                        LimitProgressBar(
+                            progress = unPagoRatio,
+                            leftLabel = formatCurrency(gastoUnPago),
+                            bottomLabel = "TOTAL ${formatCurrency(limiteUnPago)}",
+                            modifier = Modifier.fillMaxWidth(),
+                            labelColor = Color.White,
+                            trackColor = Color.White.copy(alpha = 0.2f),
+                            barHeight = 6.dp
                         )
                     }
                 }
             }
             
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(80.dp)) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(80.dp).padding(top = 8.dp)) {
                 CircularProgressIndicator(
                     progress = { progress },
                     modifier = Modifier.fillMaxSize(),
