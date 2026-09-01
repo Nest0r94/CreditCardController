@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.creditcardcontroller.data.local.TipoMedioPago
 import com.example.creditcardcontroller.ui.composables.feedback.LimitProgressBar
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
@@ -45,6 +46,7 @@ fun CardView(
     cardExpiration: String,
     usagePercentage: Float,
     isExpired: Boolean = false,
+    cardType: TipoMedioPago = TipoMedioPago.CREDITO,
     onClick: () -> Unit = {}
 ) {
     val gradient = Brush.linearGradient(
@@ -59,7 +61,7 @@ fun CardView(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp)
+            .height(if (cardType == TipoMedioPago.DEBITO) 120.dp else 240.dp)
             .alpha(if (isExpired) 0.5f else 1f),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
@@ -70,7 +72,10 @@ fun CardView(
                 .background(gradient)
                 .padding(24.dp)
         ) {
-            Column {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = if (cardType == TipoMedioPago.DEBITO) Arrangement.Center else Arrangement.Top
+            ) {
                 // Fila Superior: Nombre y Expiración
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -108,69 +113,71 @@ fun CardView(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                if (cardType != TipoMedioPago.DEBITO) {
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                // Fila Media: Monto y Límite
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Text(
-                        text = amount,
-                        style = MaterialTheme.typography.headlineLarge.copy(fontSize = 36.sp),
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Column(horizontalAlignment = Alignment.End) {
+                    // Fila Media: Monto y Límite
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
                         Text(
-                            text = "LÍMITE",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontWeight = FontWeight.Black
-                        )
-                        Text(
-                            text = limit,
-                            style = MaterialTheme.typography.titleLarge,
+                            text = amount,
+                            style = MaterialTheme.typography.headlineLarge.copy(fontSize = 36.sp),
                             color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = "LÍMITE",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Black
+                            )
+                            Text(
+                                text = limit,
+                                style = MaterialTheme.typography.titleLarge,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(color = Color.White.copy(alpha = 0.2f), thickness = 1.dp)
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.2f), thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                // Fechas
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    DateItem(
-                        icon = Icons.Default.CalendarMonth,
-                        label = "CIERRE",
-                        date = closingDate
+                    // Fechas
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        DateItem(
+                            icon = Icons.Default.CalendarMonth,
+                            label = "CIERRE",
+                            date = closingDate
+                        )
+                        Spacer(modifier = Modifier.width(24.dp))
+                        DateItem(
+                            icon = Icons.Default.Payments,
+                            label = "VENCE",
+                            date = dueDate
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    // Uso Actual y Barra de Progreso
+                    LimitProgressBar(
+                        progress = usagePercentage,
+                        leftLabel = "USO ACTUAL: ${String.format("%.1f", usagePercentage * 100)}%",
+                        labelColor = Color.White,
+                        indicatorColor = Color.White,
+                        trackColor = Color.White.copy(alpha = 0.2f),
+                        barHeight = 8.dp
                     )
-                    Spacer(modifier = Modifier.width(24.dp))
-                    DateItem(
-                        icon = Icons.Default.Payments,
-                        label = "VENCE",
-                        date = dueDate
-                    )
                 }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Uso Actual y Barra de Progreso
-                LimitProgressBar(
-                    progress = usagePercentage,
-                    leftLabel = "USO ACTUAL: ${String.format("%.1f", usagePercentage * 100)}%",
-                    labelColor = Color.White,
-                    indicatorColor = Color.White,
-                    trackColor = Color.White.copy(alpha = 0.2f),
-                    barHeight = 8.dp
-                )
             }
         }
     }
@@ -231,6 +238,17 @@ fun CardViewPreview() {
                 cardExpiration = "01/24",
                 usagePercentage = 0.425f,
                 isExpired = true
+            )
+
+            CardView(
+                cardName = "Visa Débito",
+                amount = "",
+                limit = "",
+                closingDate = "",
+                dueDate = "",
+                cardExpiration = "10/29",
+                usagePercentage = 0f,
+                cardType = TipoMedioPago.DEBITO
             )
         }
     }

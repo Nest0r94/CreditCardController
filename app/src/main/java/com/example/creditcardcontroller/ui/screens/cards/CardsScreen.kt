@@ -106,6 +106,7 @@ fun CardsScreen(
                         cardExpiration = if (tarjeta.vencimientoTarjeta > 0L) formatExpiration(tarjeta.vencimientoTarjeta) else "--",
                         usagePercentage = 0f,
                         isExpired = isExpired,
+                        cardType = tarjeta.tipo,
                         onClick = {
                             if (isExpired) {
                                 selectedTarjeta = tarjeta
