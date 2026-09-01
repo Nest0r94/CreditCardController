@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PresupuestoDao {
+    @Query("SELECT * FROM presupuesto_items")
+    fun getAllItems(): Flow<List<PresupuestoEntity>>
+
     @Query("SELECT * FROM presupuesto_items WHERE mes = :mes AND anio = :anio")
     fun getItemsByMonth(mes: Int, anio: Int): Flow<List<PresupuestoEntity>>
 

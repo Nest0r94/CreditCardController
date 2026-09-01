@@ -43,6 +43,7 @@ fun BalancesScreen(
             AppDatabase.getDatabase(LocalContext.current).tarjetaDao(),
             AppDatabase.getDatabase(LocalContext.current).movimientoDao(),
             AppDatabase.getDatabase(LocalContext.current).categoriaDao(),
+            AppDatabase.getDatabase(LocalContext.current).presupuestoDao(),
         )
     )
 ) {

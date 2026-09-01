@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.creditcardcontroller.data.local.TipoMedioPago
 import com.example.creditcardcontroller.data.local.dao.CategoriaDao
 import com.example.creditcardcontroller.data.local.dao.MovimientoDao
+import com.example.creditcardcontroller.data.local.dao.PresupuestoDao
 import com.example.creditcardcontroller.data.local.dao.TarjetaDao
 import com.example.creditcardcontroller.data.local.entities.CategoriaEntity
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
+import com.example.creditcardcontroller.data.local.entities.PresupuestoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,7 +28,7 @@ data class BalancesUiState(
     val categorias: List<CategoriaEntity> = emptyList(),
     val selectedTarjetaId: Long? = null,
     val selectedDate: YearMonth = YearMonth.now(),
-    val totalPresupuesto: Double = 3200.0, // Hardcoded as per image for now or can be dynamic
+    val totalPresupuesto: Double = 0.0,
     val gastoMensual: Double = 0.0,
     val gastoCuotas: Double = 0.0,
     val gastoUnPago: Double = 0.0
@@ -35,7 +37,8 @@ data class BalancesUiState(
 class BalancesViewModel(
     private val tarjetaDao: TarjetaDao,
     private val movimientoDao: MovimientoDao,
-    private val categoriaDao: CategoriaDao
+    private val categoriaDao: CategoriaDao,
+    private val presupuestoDao: PresupuestoDao
 ) : ViewModel() {
 
     private val _selectedTarjetaId = MutableStateFlow<Long?>(null)
@@ -45,9 +48,10 @@ class BalancesViewModel(
         tarjetaDao.getAllTarjetas(),
         movimientoDao.getAllMovements(),
         categoriaDao.getAllCategorias(),
-        _selectedTarjetaId,
-        _selectedDate
-    ) { allTarjetas, movimientos, categorias, selectedId, selectedDate ->
+        presupuestoDao.getAllItems(),
+        combine(_selectedTarjetaId, _selectedDate) { id, date -> id to date }
+    ) { allTarjetas, movimientos, categorias, presupuestos, selectedInfo ->
+        val (selectedId, selectedDate) = selectedInfo
         
         val tarjetas = allTarjetas.filter { it.tipo == TipoMedioPago.CREDITO }
         val tarjetasIdsPermitidos = tarjetas.map { it.id }.toSet()
@@ -63,6 +67,12 @@ class BalancesViewModel(
         val gastoCuotas = movimientosMes.filter { it.esCuotas }.sumOf { it.monto / it.cantidadCuotas }
         val gastoUnPago = movimientosMes.filter { !it.esCuotas }.sumOf { it.monto }
 
+        val totalPresupuesto = presupuestos.filter { 
+            it.mes == selectedDate.monthValue && 
+            it.anio == selectedDate.year && 
+            it.tipo == PresupuestoEntity.TIPO_INGRESO 
+        }.sumOf { it.monto }
+
         val filteredMovimientos = if (selectedId == null) {
             movimientosMes
         } else {
@@ -75,6 +85,7 @@ class BalancesViewModel(
             categorias = categorias,
             selectedTarjetaId = selectedId,
             selectedDate = selectedDate,
+            totalPresupuesto = totalPresupuesto,
             gastoMensual = totalGasto,
             gastoCuotas = gastoCuotas,
             gastoUnPago = gastoUnPago
@@ -96,12 +107,13 @@ class BalancesViewModel(
     class Factory(
         private val tarjetaDao: TarjetaDao,
         private val movimientoDao: MovimientoDao,
-        private val categoriaDao: CategoriaDao
+        private val categoriaDao: CategoriaDao,
+        private val presupuestoDao: PresupuestoDao
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(BalancesViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return BalancesViewModel(tarjetaDao, movimientoDao, categoriaDao) as T
+                return BalancesViewModel(tarjetaDao, movimientoDao, categoriaDao, presupuestoDao) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }
