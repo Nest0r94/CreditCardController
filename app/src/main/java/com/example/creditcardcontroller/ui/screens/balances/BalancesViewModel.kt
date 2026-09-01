@@ -3,6 +3,7 @@ package com.example.creditcardcontroller.ui.screens.balances
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.creditcardcontroller.data.local.TipoMedioPago
 import com.example.creditcardcontroller.data.local.dao.CategoriaDao
 import com.example.creditcardcontroller.data.local.dao.MovimientoDao
 import com.example.creditcardcontroller.data.local.dao.TarjetaDao
@@ -46,12 +47,17 @@ class BalancesViewModel(
         categoriaDao.getAllCategorias(),
         _selectedTarjetaId,
         _selectedDate
-    ) { tarjetas, movimientos, categorias, selectedId, selectedDate ->
+    ) { allTarjetas, movimientos, categorias, selectedId, selectedDate ->
         
+        val tarjetas = allTarjetas.filter { it.tipo == TipoMedioPago.CREDITO }
+        val tarjetasIdsPermitidos = tarjetas.map { it.id }.toSet()
+
         val startOfMonth = selectedDate.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val endOfMonth = selectedDate.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-        val movimientosMes = movimientos.filter { it.fecha in startOfMonth..endOfMonth }
+        val movimientosMes = movimientos.filter { 
+            it.fecha in startOfMonth..endOfMonth && it.tarjetaId in tarjetasIdsPermitidos 
+        }
         
         val totalGasto = movimientosMes.sumOf { it.monto }
         val gastoCuotas = movimientosMes.filter { it.esCuotas }.sumOf { it.monto / it.cantidadCuotas }
