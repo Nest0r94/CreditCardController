@@ -24,6 +24,7 @@ import java.time.ZoneId
 
 data class BalancesUiState(
     val tarjetas: List<TarjetaEntity> = emptyList(),
+    val tarjetasFiltro: List<TarjetaEntity> = emptyList(),
     val movimientos: List<MovimientoEntity> = emptyList(),
     val categorias: List<CategoriaEntity> = emptyList(),
     val selectedTarjetaId: Long? = null,
@@ -55,14 +56,13 @@ class BalancesViewModel(
     ) { allTarjetas, movimientos, categorias, presupuestos, selectedInfo ->
         val (selectedId, selectedDate) = selectedInfo
         
-        val tarjetas = allTarjetas.filter { it.tipo == TipoMedioPago.CREDITO }
-        val tarjetasIdsPermitidos = tarjetas.map { it.id }.toSet()
+        val tarjetasCredito = allTarjetas.filter { it.tipo == TipoMedioPago.CREDITO }
 
         val startOfMonth = selectedDate.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val endOfMonth = selectedDate.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
         val movimientosMes = movimientos.filter { 
-            it.fecha in startOfMonth..endOfMonth && it.tarjetaId in tarjetasIdsPermitidos 
+            it.fecha in startOfMonth..endOfMonth
         }
         
         val totalGasto = movimientosMes.sumOf { it.monto }
@@ -95,7 +95,8 @@ class BalancesViewModel(
         }
 
         BalancesUiState(
-            tarjetas = tarjetas,
+            tarjetas = tarjetasCredito,
+            tarjetasFiltro = allTarjetas,
             movimientos = filteredMovimientos,
             categorias = categorias,
             selectedTarjetaId = selectedId,

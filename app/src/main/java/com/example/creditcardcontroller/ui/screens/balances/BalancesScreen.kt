@@ -139,7 +139,7 @@ fun BalancesScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     MovementsFilter(
-                        tarjetas = state.tarjetas,
+                        tarjetas = state.tarjetasFiltro,
                         selectedId = state.selectedTarjetaId,
                         onSelect = viewModel::selectTarjeta
                     )
@@ -148,7 +148,7 @@ fun BalancesScreen(
                     
                     state.movimientos.forEach { movimiento ->
                         val categoria = state.categorias.find { it.id == movimiento.categoriaId }
-                        val tarjeta = state.tarjetas.find { it.id == movimiento.tarjetaId }
+                        val tarjeta = state.tarjetasFiltro.find { it.id == movimiento.tarjetaId }
                         MovementItem(
                             movimiento = movimiento,
                             categoria = categoria,
