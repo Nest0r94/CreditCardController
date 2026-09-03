@@ -69,6 +69,7 @@ fun AppPreferencesScreen(modifier: Modifier = Modifier) {
     val biometricEnabled by settingsDataStore.biometricEnabledFlow.collectAsState(initial = false)
     val autoLockEnabled by settingsDataStore.autoLockEnabledFlow.collectAsState(initial = false)
     val stampTaxPercentage by settingsDataStore.stampTaxPercentageFlow.collectAsState(initial = 1.2)
+    val editTimeEnabled by settingsDataStore.editTimeEnabledFlow.collectAsState(initial = false)
 
     val themeLabel = when (currentTheme) {
         AppTheme.DARK -> "Oscuro"
@@ -188,6 +189,17 @@ fun AppPreferencesScreen(modifier: Modifier = Modifier) {
                         }
                         scope.launch {
                             settingsDataStore.setTheme(newTheme)
+                        }
+                    }
+                )
+
+                SettingItemSwitch(
+                    title = "Editar hora en movimientos",
+                    subtitle = "Habilita la selección de hora al crear un gasto",
+                    checked = editTimeEnabled,
+                    onCheckedChange = {
+                        scope.launch {
+                            settingsDataStore.setEditTimeEnabled(it)
                         }
                     }
                 )

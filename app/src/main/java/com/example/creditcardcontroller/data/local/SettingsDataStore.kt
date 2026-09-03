@@ -20,6 +20,7 @@ class SettingsDataStore(private val context: Context) {
         private val AUTO_LOCK_ENABLED_KEY = booleanPreferencesKey("auto_lock_enabled")
         private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
         private val STAMP_TAX_PERCENTAGE_KEY = stringPreferencesKey("stamp_tax_percentage")
+        private val EDIT_TIME_ENABLED_KEY = booleanPreferencesKey("edit_time_enabled")
     }
 
     val themeFlow: Flow<AppTheme> = context.dataStore.data
@@ -52,6 +53,11 @@ class SettingsDataStore(private val context: Context) {
             preferences[STAMP_TAX_PERCENTAGE_KEY]?.toDoubleOrNull() ?: 1.2
         }
 
+    val editTimeEnabledFlow: Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[EDIT_TIME_ENABLED_KEY] ?: false
+        }
+
     suspend fun setTheme(theme: AppTheme) {
         context.dataStore.edit { preferences ->
             preferences[THEME_KEY] = theme.name
@@ -79,6 +85,12 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setStampTaxPercentage(percentage: Double) {
         context.dataStore.edit { preferences ->
             preferences[STAMP_TAX_PERCENTAGE_KEY] = percentage.toString()
+        }
+    }
+
+    suspend fun setEditTimeEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[EDIT_TIME_ENABLED_KEY] = enabled
         }
     }
 }

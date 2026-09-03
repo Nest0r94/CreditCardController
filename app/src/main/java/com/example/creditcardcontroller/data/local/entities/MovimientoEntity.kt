@@ -44,5 +44,6 @@ data class MovimientoEntity(
     val tarjetaId: Long,
     val descuentoId: Long?,
     val montoReintegrable: Double,
-    val montoReintegrado: Boolean
+    val montoReintegrado: Boolean,
+    val hora: Long? = null
 )

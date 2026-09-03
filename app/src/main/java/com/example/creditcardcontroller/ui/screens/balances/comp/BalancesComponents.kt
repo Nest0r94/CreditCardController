@@ -33,6 +33,7 @@ import com.example.creditcardcontroller.ui.composables.feedback.LimitProgressBar
 import com.example.creditcardcontroller.ui.util.proximaFechaDeDia
 import java.text.NumberFormat
 import java.time.Instant
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -348,7 +349,7 @@ fun MovementItem(movimiento: MovimientoEntity, categoria: CategoriaEntity?, tarj
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    formatDateFull(movimiento.fecha),
+                    formatDateFull(movimiento.fecha, movimiento.hora),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -387,9 +388,15 @@ fun formatDateShort(timestamp: Long): String {
     return date.format(DateTimeFormatter.ofPattern("dd MMM"))
 }
 
-fun formatDateFull(timestamp: Long): String {
-    val date = Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime()
-    return date.format(DateTimeFormatter.ofPattern("dd MMM, HH:mm"))
+fun formatDateFull(timestamp: Long, hora: Long?): String {
+    val date = Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
+    val datePart = date.format(DateTimeFormatter.ofPattern("dd MMM"))
+    return if (hora != null) {
+        val time = LocalTime.ofNanoOfDay(hora * 1_000_000)
+        "$datePart, ${time.format(DateTimeFormatter.ofPattern("HH:mm"))}"
+    } else {
+        datePart
+    }
 }
 
 private fun getProgressColor(progress: Float): Color {

@@ -1,5 +1,6 @@
 package com.example.creditcardcontroller.ui.screens.new_movement
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.creditcardcontroller.data.local.AppDatabase
+import com.example.creditcardcontroller.data.local.SettingsDataStore
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
@@ -35,6 +37,7 @@ import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategor
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -47,16 +50,19 @@ fun NewMovementScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val db = remember { AppDatabase.getDatabase(context) }
+    val settingsDataStore = remember { SettingsDataStore(context) }
     
     val tarjetas by db.tarjetaDao().getAllTarjetas().collectAsState(initial = emptyList())
     val descuentos by db.descuentoDao().getAllDescuentos().collectAsState(initial = emptyList())
     val categorias by db.categoriaDao().getAllCategorias().collectAsState(initial = emptyList())
     val movimientos by db.movimientoDao().getAllMovements().collectAsState(initial = emptyList())
+    val editTimeEnabled by settingsDataStore.editTimeEnabledFlow.collectAsState(initial = false)
 
     var amount by remember { mutableStateOf("") }
     var selectedCategoriaId by remember { mutableStateOf<Long?>(null) }
     var selectedTarjeta by remember { mutableStateOf<TarjetaEntity?>(null) }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedTime by remember { mutableStateOf<LocalTime?>(null) }
     var selectedDescuento by remember { mutableStateOf<DescuentoEntity?>(null) }
 
     val filteredDescuentos = remember(selectedTarjeta, descuentos) {
@@ -69,6 +75,7 @@ fun NewMovementScreen(
     var cantidadCuotas by remember { mutableStateOf(3) }
 
     var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
     var showTarjetaDropdown by remember { mutableStateOf(false) }
     var showDescuentoDropdown by remember { mutableStateOf(false) }
 
@@ -105,6 +112,11 @@ fun NewMovementScreen(
         initialSelectedDateMillis = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     )
 
+    val timePickerState = rememberTimePickerState(
+        initialHour = selectedTime?.hour ?: LocalTime.now().hour,
+        initialMinute = selectedTime?.minute ?: LocalTime.now().minute
+    )
+
     LaunchedEffect(tarjetas) {
         if (selectedTarjeta == null && tarjetas.isNotEmpty()) {
             selectedTarjeta = tarjetas.first()
@@ -138,6 +150,36 @@ fun NewMovementScreen(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    if (showTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                    showTimePicker = false
+                }) {
+                    Text("Confirmar")
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        selectedTime = null
+                        showTimePicker = false
+                    }) {
+                        Text("Limpiar", color = MaterialTheme.colorScheme.error)
+                    }
+                    TextButton(onClick = { showTimePicker = false }) {
+                        Text("Cancelar")
+                    }
+                }
+            },
+            text = {
+                TimePicker(state = timePickerState)
+            }
+        )
     }
 
     Column(
@@ -348,6 +390,25 @@ fun NewMovementScreen(
                     showDatePicker = true
                 }
             }
+            
+            if (editTimeEnabled) {
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "HORA", 
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                        style = MaterialTheme.typography.labelSmall, 
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    CustomDropdownSelector(
+                        text = selectedTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "--:--",
+                        icon = Icons.Default.AccessTime
+                    ) {
+                        showTimePicker = true
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -544,22 +605,29 @@ fun NewMovementScreen(
         PrimaryButton(
             text = "Guardar Gasto",
             onClick = {
-                scope.launch {
-                    val catId = selectedCategoriaId ?: categorias.firstOrNull()?.id ?: 0
-                    val movement = MovimientoEntity(
-                        descripcion = descripcion,
-                        monto = amount.toDoubleOrNull() ?: 0.0,
-                        esCuotas = esCuotas,
-                        cantidadCuotas = if (esCuotas) cantidadCuotas else 1,
-                        fecha = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
-                        categoriaId = catId,
-                        tarjetaId = selectedTarjeta?.id ?: 0,
-                        descuentoId = selectedDescuento?.id,
-                        montoReintegrable = ahorroEstimado,
-                        montoReintegrado = false
-                    )
-                    db.movimientoDao().insert(movement)
-                    onBack()
+                val catId = selectedCategoriaId ?: categorias.firstOrNull()?.id
+                val tarjetaId = selectedTarjeta?.id
+                
+                if (catId != null && tarjetaId != null && amount.toDoubleOrNull() != null) {
+                    scope.launch {
+                        val movement = MovimientoEntity(
+                            descripcion = descripcion,
+                            monto = amount.toDoubleOrNull() ?: 0.0,
+                            esCuotas = esCuotas,
+                            cantidadCuotas = if (esCuotas) cantidadCuotas else 1,
+                            fecha = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+                            categoriaId = catId,
+                            tarjetaId = tarjetaId,
+                            descuentoId = selectedDescuento?.id,
+                            montoReintegrable = ahorroEstimado,
+                            montoReintegrado = false,
+                            hora = selectedTime?.toNanoOfDay()?.div(1_000_000)
+                        )
+                        db.movimientoDao().insert(movement)
+                        onBack()
+                    }
+                } else {
+                    Toast.makeText(context, "Por favor complete los campos obligatorios", Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier.fillMaxWidth().height(56.dp),

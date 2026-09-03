@@ -21,6 +21,7 @@ fun diaDeFecha(millis: Long): Int =
     Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).dayOfMonth
 
 private fun proximaFechaDeDia(dia: Int, hoy: LocalDate, zone: ZoneId): Long {
+    if (dia <= 0) return hoy.atStartOfDay(zone).toInstant().toEpochMilli() // Fallback if dia is 0
     val mesActual = YearMonth.from(hoy)
     var fecha = if (dia <= mesActual.lengthOfMonth()) mesActual.atDay(dia) else mesActual.atEndOfMonth()
     if (fecha.isBefore(hoy)) {
