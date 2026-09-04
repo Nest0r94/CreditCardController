@@ -38,7 +38,7 @@ import com.example.creditcardcontroller.ui.util.proximaFechaDeDia
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.time.Instant
-import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -161,7 +161,7 @@ private fun formatCurrency(value: Double): String {
 private fun formatClosingDate(millis: Long): String {
     val formatter = DateTimeFormatter.ofPattern("dd MMM", Locale("es"))
     return Instant.ofEpochMilli(millis)
-        .atZone(ZoneId.systemDefault())
+        .atZone(ZoneOffset.UTC)
         .toLocalDate()
         .format(formatter)
 }
@@ -169,7 +169,7 @@ private fun formatClosingDate(millis: Long): String {
 private fun formatDueDate(millis: Long): String {
     val formatter = DateTimeFormatter.ofPattern("dd MMM", Locale("es"))
     return Instant.ofEpochMilli(millis)
-        .atZone(ZoneId.systemDefault())
+        .atZone(ZoneOffset.UTC)
         .toLocalDate()
         .format(formatter)
 }
@@ -177,7 +177,7 @@ private fun formatDueDate(millis: Long): String {
 private fun formatExpiration(millis: Long): String {
     val formatter = DateTimeFormatter.ofPattern("MM/yy", Locale("es"))
     return Instant.ofEpochMilli(millis)
-        .atZone(ZoneId.systemDefault())
+        .atZone(ZoneOffset.UTC)
         .toLocalDate()
         .format(formatter)
 }
