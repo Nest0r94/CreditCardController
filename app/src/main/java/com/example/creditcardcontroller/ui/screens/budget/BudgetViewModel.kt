@@ -142,43 +142,9 @@ class BudgetViewModel(
                             item.copy(id = 0, mes = date.monthValue, anio = date.year)
                         )
                     }
-                } else {
-                    // Seed inicial con los 3 montos troncales si es la primera vez en la app
-                    seedDefaultItems(date)
                 }
             }
         }
-    }
-
-    private suspend fun seedDefaultItems(date: YearMonth) {
-        presupuestoDao.insert(
-            PresupuestoEntity(
-                mes = date.monthValue, anio = date.year,
-                titulo = "Ingreso mensual", monto = 4500.0, tipo = PresupuestoEntity.TIPO_INGRESO,
-                icono = "AddChart", color = "#4CAF50"
-            )
-        )
-        presupuestoDao.insert(
-            PresupuestoEntity(
-                mes = date.monthValue, anio = date.year,
-                titulo = "Gasto 1 cuota en tarjeta", monto = 450.0, tipo = PresupuestoEntity.TIPO_LIMITE,
-                icono = "CreditCard", color = "#00BFA5"
-            )
-        )
-        presupuestoDao.insert(
-            PresupuestoEntity(
-                mes = date.monthValue, anio = date.year,
-                titulo = "Gasto mensual de tarjeta", monto = 850.0, tipo = PresupuestoEntity.TIPO_LIMITE,
-                icono = "AccountBalanceWallet", color = "#E57373"
-            )
-        )
-        presupuestoDao.insert(
-            PresupuestoEntity(
-                mes = date.monthValue, anio = date.year,
-                titulo = DISPONIBLE_TITULO, monto = 0.0, tipo = PresupuestoEntity.TIPO_AHORRO,
-                icono = "AccountBalance", color = "#FFC107"
-            )
-        )
     }
 
     fun updateSelectedDate(date: YearMonth) {
