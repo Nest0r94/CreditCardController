@@ -1,14 +1,16 @@
 package com.example.creditcardcontroller.ui.screens.budget.comp
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -24,6 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.creditcardcontroller.data.local.entities.PresupuestoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
+import com.example.creditcardcontroller.ui.screens.promos.comp.CardSelector
 
 @Composable
 fun EditAmountDialog(
@@ -53,22 +56,28 @@ fun EditAmountDialog(
                 )
 
                 if (tipo == PresupuestoEntity.TIPO_GASTO) {
-                    HorizontalDivider(modifier = Modifier.height(4.dp))
+                    HorizontalDivider(modifier = Modifier.height(16.dp), color = androidx.compose.ui.graphics.Color.Transparent)
                     Text(
-                        text = "Tipo de pago",
+                        text = "Método de pago",
                         style = MaterialTheme.typography.labelLarge
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CardSelector(
+                            name = "Efectivo",
                             selected = selectedTarjetaId == null,
-                            onClick = { selectedTarjetaId = null },
-                            label = { Text("Cuenta") }
+                            onClick = { selectedTarjetaId = null }
                         )
                         tarjetas.forEach { tarjeta ->
-                            FilterChip(
+                            CardSelector(
+                                name = tarjeta.nombre,
                                 selected = selectedTarjetaId == tarjeta.id,
-                                onClick = { selectedTarjetaId = tarjeta.id },
-                                label = { Text(tarjeta.nombre) }
+                                onClick = { selectedTarjetaId = tarjeta.id }
                             )
                         }
                     }
