@@ -37,6 +37,10 @@ class MainActivity : FragmentActivity() {
                 com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).generarResumenesPendientes()
             }
 
+            val presupuestoDao = remember { AppDatabase.getDatabase(applicationContext).presupuestoDao() }
+            val budgetItems by presupuestoDao.getAllItems().collectAsState(initial = null)
+            val budgetHasData = budgetItems?.isNotEmpty() == true
+
             val theme by settingsDataStore.themeFlow.collectAsState(initial = AppTheme.SYSTEM)
             val biometricEnabled by settingsDataStore.biometricEnabledFlow.collectAsState(initial = null)
             val autoLockEnabled by settingsDataStore.autoLockEnabledFlow.collectAsState(initial = false)
@@ -66,7 +70,7 @@ class MainActivity : FragmentActivity() {
                 }
             }
 
-            if (biometricEnabled == null || onboardingCompleted == null) return@setContent
+            if (biometricEnabled == null || onboardingCompleted == null || budgetItems == null) return@setContent
 
             val darkTheme = when (theme) {
                 AppTheme.LIGHT -> false
@@ -79,6 +83,8 @@ class MainActivity : FragmentActivity() {
                     OnboardingScreen(onFinished = { /* State will update automatically via Flow */ })
                 } else if (biometricEnabled == true && !isAuthenticated) {
                     LoginScreen(onAuthenticated = { isAuthenticated = true })
+                } else if (!budgetHasData) {
+                    OnboardingScreen(onFinished = { /* Budget gets seeded on completion */ })
                 } else {
                     MainScaffold()
                 }
