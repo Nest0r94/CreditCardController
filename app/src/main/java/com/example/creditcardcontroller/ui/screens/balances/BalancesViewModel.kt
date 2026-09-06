@@ -66,7 +66,7 @@ class BalancesViewModel(
         }
         
         val totalGasto = movimientosMes.sumOf { it.monto }
-        val gastoCuotas = movimientosMes.filter { it.esCuotas }.sumOf { it.monto / it.cantidadCuotas }
+        val gastoCuotas = movimientosMes.filter { it.esCuotas }.sumOf { it.monto }
         val gastoUnPago = movimientosMes.filter { !it.esCuotas }.sumOf { it.monto }
 
         val totalPresupuesto = presupuestos.filter { 

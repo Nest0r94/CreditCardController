@@ -39,6 +39,7 @@ data class MovimientoEntity(
     val monto: Double,
     val esCuotas: Boolean,
     val cantidadCuotas: Int,
+    val numeroCuota: Int = 0,
     val fecha: Long,
     val categoriaId: Long,
     val tarjetaId: Long,

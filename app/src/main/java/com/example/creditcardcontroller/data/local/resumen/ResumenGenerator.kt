@@ -6,6 +6,7 @@ import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.ResumenEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 import com.example.creditcardcontroller.ui.util.fechaDesdeDia
+import com.example.creditcardcontroller.ui.util.periodoResumen
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -99,24 +100,9 @@ class ResumenGenerator(private val db: AppDatabase) {
     private fun calcularTotal(movimientos: List<MovimientoEntity>, diaCierre: Int, periodo: YearMonth): Double {
         var total = 0.0
         for (m in movimientos) {
-            val base = periodoBase(m, diaCierre)
-            if (!m.esCuotas) {
-                if (periodo == base) total += m.monto
-            } else {
-                val n = m.cantidadCuotas.coerceAtLeast(1)
-                val desde = base
-                val hasta = base.plusMonths((n - 1).toLong())
-                if (!periodo.isBefore(desde) && !periodo.isAfter(hasta)) {
-                    total += m.monto / n
-                }
-            }
+            if (periodo == periodoResumen(m.fecha, diaCierre)) total += m.monto
         }
         return total
-    }
-
-    private fun periodoBase(m: MovimientoEntity, diaCierre: Int): YearMonth {
-        val mes = toYearMonth(m.fecha)
-        return if (m.fecha <= fechaDesdeDia(diaCierre, mes)) mes else mes.plusMonths(1)
     }
 
     private fun toYearMonth(millis: Long): YearMonth =

@@ -220,13 +220,6 @@ fun MovementItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    if (movimiento.esCuotas) {
-                        Text(
-                            text = " • ${movimiento.cantidadCuotas} cuotas",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
                 }
             }
 

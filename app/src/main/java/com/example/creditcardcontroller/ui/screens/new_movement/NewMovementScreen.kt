@@ -31,6 +31,7 @@ import com.example.creditcardcontroller.data.local.SettingsDataStore
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
+import com.example.creditcardcontroller.data.local.resumen.expandirEnCuotas
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.composables.categories.colorDeCategoria
 import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategoria
@@ -611,11 +612,14 @@ fun NewMovementScreen(
                 
                 if (catId != null && tarjetaId != null && amount.toDoubleOrNull() != null) {
                     scope.launch {
-                        val movement = MovimientoEntity(
+                        val montoTotal = amount.toDoubleOrNull() ?: 0.0
+                        val moverACuotas = esCuotas && cantidadCuotas > 1
+                        val movimiento = MovimientoEntity(
                             descripcion = descripcion,
-                            monto = amount.toDoubleOrNull() ?: 0.0,
-                            esCuotas = esCuotas,
-                            cantidadCuotas = if (esCuotas) cantidadCuotas else 1,
+                            monto = montoTotal,
+                            esCuotas = moverACuotas,
+                            cantidadCuotas = if (moverACuotas) cantidadCuotas else 1,
+                            numeroCuota = 0,
                             fecha = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
                             categoriaId = catId,
                             tarjetaId = tarjetaId,
@@ -624,7 +628,12 @@ fun NewMovementScreen(
                             montoReintegrado = false,
                             hora = selectedTime?.toNanoOfDay()?.div(1_000_000)
                         )
-                        db.movimientoDao().insert(movement)
+                        val movimientos = if (moverACuotas) {
+                            expandirEnCuotas(movimiento, selectedTarjeta?.diaCierreResumen)
+                        } else {
+                            listOf(movimiento)
+                        }
+                        db.movimientoDao().insertAll(movimientos)
                         com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).recalcular(tarjetaId)
                         onBack()
                     }
