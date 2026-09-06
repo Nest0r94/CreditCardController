@@ -23,6 +23,7 @@ import com.example.creditcardcontroller.data.local.AppDatabase
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.ui.composables.categories.colorDeCategoria
 import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategoria
+import com.example.creditcardcontroller.ui.composables.dialogs.DeleteConfirmationDialog
 import com.example.creditcardcontroller.ui.composables.layout.DateHeader
 import com.example.creditcardcontroller.ui.composables.layout.FinancialSurface
 import com.example.creditcardcontroller.ui.composables.layout.MonthPickerDialog
@@ -46,6 +47,7 @@ fun StatsScreen(modifier: Modifier = Modifier) {
     var selectedDate by remember { mutableStateOf(YearMonth.now()) }
     var showMonthPicker by remember { mutableStateOf(false) }
     var showYearPicker by remember { mutableStateOf(false) }
+    var movementToDelete by remember { mutableStateOf<MovimientoEntity?>(null) }
 
     val filteredMovements = remember(movimientos, selectedDate) {
         movimientos.filter { mov ->
@@ -129,10 +131,7 @@ fun StatsScreen(modifier: Modifier = Modifier) {
                             categoriaColor = colorDeCategoria(categoria?.color ?: "#808080"),
                             tarjetaName = tarjeta?.nombre ?: "Sin tarjeta",
                             onDelete = {
-                                scope.launch {
-                                    db.movimientoDao().delete(movimiento)
-                                    com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).recalcular(movimiento.tarjetaId)
-                                }
+                                movementToDelete = movimiento
                             }
                         )
                     }
@@ -159,6 +158,23 @@ fun StatsScreen(modifier: Modifier = Modifier) {
                 selectedDate = selectedDate.withYear(year)
                 showYearPicker = false
             }
+        )
+    }
+
+    if (movementToDelete != null) {
+        DeleteConfirmationDialog(
+            onDismiss = { movementToDelete = null },
+            onConfirm = {
+                movementToDelete?.let { mov ->
+                    scope.launch {
+                        db.movimientoDao().delete(mov)
+                        com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).recalcular(mov.tarjetaId)
+                    }
+                }
+                movementToDelete = null
+            },
+            title = "Eliminar movimiento",
+            body = "¿Estás seguro de que deseas eliminar este movimiento? Se ajustarán los balances correspondientes."
         )
     }
 }
