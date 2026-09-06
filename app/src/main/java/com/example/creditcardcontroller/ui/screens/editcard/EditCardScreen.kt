@@ -43,7 +43,8 @@ import kotlinx.coroutines.launch
 fun EditCardScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    tarjetaId: Long? = null
+    tarjetaId: Long? = null,
+    initialTipo: TipoMedioPago? = null
 ) {
     val isEditMode = tarjetaId != null
     val context = LocalContext.current
@@ -51,7 +52,7 @@ fun EditCardScreen(
     val scope = rememberCoroutineScope()
 
     var cardName by remember { mutableStateOf("") }
-    var cardTipo by remember { mutableStateOf(TipoMedioPago.CREDITO) }
+    var cardTipo by remember { mutableStateOf(initialTipo ?: TipoMedioPago.CREDITO) }
     var monthlyLimit by remember { mutableStateOf("") }
     var installmentsLimit by remember { mutableStateOf("") }
     var closingDate by remember { mutableStateOf<Long?>(null) }
@@ -153,15 +154,17 @@ fun EditCardScreen(
                 icon = Icons.Default.CreditCard
             )
 
-            OfferDropdown(
-                label = "Tipo de medio de pago",
-                options = listOf("CREDITO", "DEBITO"),
-                selectedOption = cardTipo.name,
-                onOptionSelected = { selected ->
-                    cardTipo = TipoMedioPago.valueOf(selected)
-                },
-                enabled = cardTipo != TipoMedioPago.CUENTA
-            )
+            if (isEditMode) {
+                OfferDropdown(
+                    label = "Tipo de medio de pago",
+                    options = listOf("CREDITO", "DEBITO"),
+                    selectedOption = cardTipo.name,
+                    onOptionSelected = { selected ->
+                        cardTipo = TipoMedioPago.valueOf(selected)
+                    },
+                    enabled = cardTipo != TipoMedioPago.CUENTA
+                )
+            }
 
             if (cardTipo == TipoMedioPago.CREDITO) {
                 FormInput(

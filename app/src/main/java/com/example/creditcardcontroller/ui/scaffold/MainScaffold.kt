@@ -29,12 +29,14 @@ import com.example.creditcardcontroller.ui.screens.settings.HelpCenterScreen
 import com.example.creditcardcontroller.ui.screens.editcard.EditCardScreen
 import com.example.creditcardcontroller.ui.screens.editoffer.EditOfferScreen
 import com.example.creditcardcontroller.ui.screens.budget.BudgetScreen
+import com.example.creditcardcontroller.data.local.TipoMedioPago
 
 @Composable
 fun MainScaffold() {
     var currentRoute by remember { mutableStateOf("presupuesto") }
     var isEditMode by remember { mutableStateOf(false) }
     var editingTarjetaId by remember { mutableStateOf<Long?>(null) }
+    var initialCardTipo by remember { mutableStateOf<TipoMedioPago?>(null) }
     var isPromoEditMode by remember { mutableStateOf(false) }
     var editingPromoId by remember { mutableStateOf<Long?>(null) }
 
@@ -105,15 +107,17 @@ fun MainScaffold() {
                     editingTarjetaId = tarjetaId
                     currentRoute = "editar_tarjeta"
                 },
-                onAddCard = {
+                onAddCard = { tipo ->
                     isEditMode = false
                     editingTarjetaId = null
+                    initialCardTipo = tipo
                     currentRoute = "editar_tarjeta"
                 }
             )
             "editar_tarjeta" -> EditCardScreen(
                 modifier = modifier,
                 tarjetaId = editingTarjetaId,
+                initialTipo = initialCardTipo,
                 onBack = { currentRoute = "tarjetas" }
             )
             "nuevo" -> NewMovementScreen(

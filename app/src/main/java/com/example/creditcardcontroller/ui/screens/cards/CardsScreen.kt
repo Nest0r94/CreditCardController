@@ -46,7 +46,7 @@ import java.util.Locale
 fun CardsScreen(
     modifier: Modifier = Modifier,
     onEditCard: (Long) -> Unit,
-    onAddCard: () -> Unit
+    onAddCard: (TipoMedioPago) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -125,7 +125,7 @@ fun CardsScreen(
 
         PrimaryButton(
             text = "Agregar Tarjeta",
-            onClick = onAddCard,
+            onClick = { onAddCard(tipoVisible) },
             modifier = Modifier.fillMaxWidth(),
             icon = Icons.Default.Add
         )
