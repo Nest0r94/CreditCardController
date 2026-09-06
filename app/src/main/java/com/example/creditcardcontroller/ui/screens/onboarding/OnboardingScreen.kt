@@ -130,7 +130,7 @@ fun OnboardingScreen(
                 when (step) {
                     1 -> StepContent(
                         title = "Ingreso Mensual",
-                        description = "¿Cuál es tu ingreso mensual neto promedio?",
+                        description = "¿Cuál es tu sueldo mensual?",
                         icon = Icons.Default.AddChart,
                         value = ingreso,
                         onValueChange = viewModel::updateIngreso,
@@ -138,7 +138,7 @@ fun OnboardingScreen(
                     )
                     2 -> StepContent(
                         title = "Límite 1 Pago",
-                        description = "Límite mensual disponible para compras en 1 pago",
+                        description = "Ingresá un límite para tus gastos mensuales en tarjetas de créditos en 1 pago. No permitas que el resumen de tu tarjeta sobrepase tu salario.",
                         icon = Icons.Default.CreditCard,
                         value = limite1,
                         onValueChange = viewModel::updateLimiteUnPago,
@@ -146,7 +146,7 @@ fun OnboardingScreen(
                     )
                     3 -> StepContent(
                         title = "Límite en Cuotas",
-                        description = "Límite mensual disponible para consumos en cuotas",
+                        description = "Ingresá un límite para la cantidad de plata que vas a gastar en cuotas en un mes. Controlá las cuotas por separado para evitar que las cuotas se coman todo el gasto mensual de crédito.",
                         icon = Icons.Default.AccountBalanceWallet,
                         value = limiteC,
                         onValueChange = viewModel::updateLimiteCuotas,
@@ -154,7 +154,7 @@ fun OnboardingScreen(
                     )
                     4 -> StepContent(
                         title = "Impuesto a los Sellos",
-                        description = "Porcentaje del impuesto a los sellos en tu provincia",
+                        description = "Cada provincia tiene su propio impuesto que afecta directamente al resumen de la tarjeta.",
                         icon = Icons.Default.Percent,
                         value = tax,
                         onValueChange = viewModel::updateImpuestoSellos,
