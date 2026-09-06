@@ -625,6 +625,7 @@ fun NewMovementScreen(
                             hora = selectedTime?.toNanoOfDay()?.div(1_000_000)
                         )
                         db.movimientoDao().insert(movement)
+                        com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).recalcular(tarjetaId)
                         onBack()
                     }
                 } else {

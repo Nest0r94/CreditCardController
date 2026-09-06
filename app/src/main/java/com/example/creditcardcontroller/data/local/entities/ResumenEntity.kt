@@ -13,17 +13,10 @@ import androidx.room.PrimaryKey
             parentColumns = ["id"],
             childColumns = ["tarjetaId"],
             onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = MovimientoEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["pagoMovimientoId"],
-            onDelete = ForeignKey.SET_NULL
         )
     ],
     indices = [
         Index(value = ["tarjetaId"]),
-        Index(value = ["pagoMovimientoId"]),
         Index(value = ["tarjetaId", "periodo"], unique = true)
     ]
 )
@@ -33,6 +26,6 @@ data class ResumenEntity(
     val periodo: String,
     val fechaCierre: Long,
     val fechaVencimiento: Long,
-    val pagado: Boolean,
-    val pagoMovimientoId: Long?
+    val total: Double,
+    val pagado: Boolean
 )

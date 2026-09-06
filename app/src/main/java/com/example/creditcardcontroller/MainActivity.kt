@@ -31,8 +31,10 @@ class MainActivity : FragmentActivity() {
             val settingsDataStore = remember { SettingsDataStore(applicationContext) }
 
             LaunchedEffect(Unit) {
-                AppDatabase.getDatabase(applicationContext).seedCategoriasSiVacia()
-                AppDatabase.getDatabase(applicationContext).seedTarjetaCuentaSiVacia()
+                val db = AppDatabase.getDatabase(applicationContext)
+                db.seedCategoriasSiVacia()
+                db.seedTarjetaCuentaSiVacia()
+                com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).generarResumenesPendientes()
             }
 
             val theme by settingsDataStore.themeFlow.collectAsState(initial = AppTheme.SYSTEM)

@@ -3,6 +3,7 @@ package com.example.creditcardcontroller.data.local.backup
 import android.content.Context
 import androidx.room.withTransaction
 import com.example.creditcardcontroller.data.local.AppDatabase
+import com.example.creditcardcontroller.data.local.resumen.ResumenGenerator
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.Dispatchers
@@ -57,6 +58,7 @@ class BackupManager(private val db: AppDatabase) {
                     db.resumenDao().insertAll(data.resumenes)
                 }
             }
+            ResumenGenerator(db).generarResumenesPendientes()
             true
         } catch (e: Exception) {
             false

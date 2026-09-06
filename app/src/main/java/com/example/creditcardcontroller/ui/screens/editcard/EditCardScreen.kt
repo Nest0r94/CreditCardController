@@ -109,6 +109,9 @@ fun EditCardScreen(
                             vencimientoTarjeta = vencimientoTarjeta
                         )
                     )
+                    com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(
+                        AppDatabase.getDatabase(context)
+                    ).recalcular(tarjetaId)
                 }
             }
             onBack()

@@ -33,6 +33,9 @@ interface ResumenDao {
     @Delete
     suspend fun delete(resumen: ResumenEntity)
 
+    @Query("DELETE FROM resumenes WHERE tarjetaId = :tarjetaId")
+    suspend fun deleteByTarjeta(tarjetaId: Long)
+
     @Query("DELETE FROM resumenes")
     suspend fun clearAll()
 }

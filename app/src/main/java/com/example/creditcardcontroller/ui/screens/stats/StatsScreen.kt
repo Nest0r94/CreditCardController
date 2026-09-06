@@ -131,6 +131,7 @@ fun StatsScreen(modifier: Modifier = Modifier) {
                             onDelete = {
                                 scope.launch {
                                     db.movimientoDao().delete(movimiento)
+                                    com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).recalcular(movimiento.tarjetaId)
                                 }
                             }
                         )
