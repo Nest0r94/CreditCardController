@@ -68,11 +68,6 @@ fun EditAmountDialog(
                             .padding(vertical = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        CardSelector(
-                            name = "Efectivo",
-                            selected = selectedTarjetaId == null,
-                            onClick = { selectedTarjetaId = null }
-                        )
                         tarjetas.forEach { tarjeta ->
                             CardSelector(
                                 name = tarjeta.nombre,

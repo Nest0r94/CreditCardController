@@ -3,6 +3,7 @@ package com.example.creditcardcontroller.ui.screens.budget
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.creditcardcontroller.data.local.TipoMedioPago
 import com.example.creditcardcontroller.data.local.dao.PresupuestoDao
 import com.example.creditcardcontroller.data.local.dao.TarjetaDao
 import com.example.creditcardcontroller.data.local.entities.PresupuestoEntity
@@ -93,8 +94,12 @@ class BudgetViewModel(
 
         val totalIncome = incomes.sumOf { it.monto }
         val totalLimite = limites.sumOf { it.monto }
-        // Los gastos con tarjeta ya estan contados en los limites
-        val gastosCuenta = gastos.filter { it.tarjetaId == null }.sumOf { it.monto }
+        // Los gastos con tarjeta de crédito ya están contados en los límites. 
+        // Los gastos en cuenta o con tarjeta de débito se suman aparte.
+        val gastosCuenta = gastos.sumOf { item ->
+            val tarjeta = tarjetas.find { it.id == item.tarjetaId }
+            if (tarjeta == null || tarjeta.tipo != TipoMedioPago.CREDITO) item.monto else 0.0
+        }
         val gastosChip = totalLimite + gastosCuenta
         val ahorroChip = totalIncome - gastosChip
 
