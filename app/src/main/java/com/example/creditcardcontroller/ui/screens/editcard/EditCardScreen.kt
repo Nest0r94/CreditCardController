@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Payments
@@ -24,6 +25,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.creditcardcontroller.data.local.AppDatabase
@@ -172,14 +174,16 @@ fun EditCardScreen(
                     label = "Límite mensual",
                     value = monthlyLimit,
                     onValueChange = { monthlyLimit = it },
-                    icon = Icons.Default.Payments
+                    icon = Icons.Default.Payments,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
 
                 FormInput(
                     label = "Límite en cuotas",
                     value = installmentsLimit,
                     onValueChange = { installmentsLimit = it },
-                    icon = Icons.Default.Payments
+                    icon = Icons.Default.Payments,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
 
                 OfferDateField(

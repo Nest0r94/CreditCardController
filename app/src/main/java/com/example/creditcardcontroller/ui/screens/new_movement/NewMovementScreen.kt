@@ -259,6 +259,7 @@ fun NewMovementScreen(
                     textAlign = TextAlign.Start
                 ),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                singleLine = true,
                 modifier = Modifier.width(IntrinsicSize.Min),
                 decorationBox = { innerTextField ->
                     if (amount.isEmpty()) {
@@ -476,6 +477,8 @@ fun NewMovementScreen(
             placeholder = { Text("Ej: Cena con amigos", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            maxLines = 1,
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                 focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
