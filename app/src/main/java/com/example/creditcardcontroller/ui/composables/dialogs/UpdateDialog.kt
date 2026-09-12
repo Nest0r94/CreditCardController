@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.composables.actions.TextActionButton
+import com.example.creditcardcontroller.ui.composables.inputs.MonthYearPickerField
 import com.example.creditcardcontroller.ui.composables.inputs.OfferDateField
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 
@@ -25,7 +26,8 @@ fun UpdateDialog(
     onDismiss: () -> Unit,
     onUpdate: (Long) -> Unit,
     onDelete: () -> Unit,
-    initialDateMillis: Long? = null
+    initialDateMillis: Long? = null,
+    useMonthYearPicker: Boolean = false
 ) {
     Dialog(onDismissRequest = onDismiss) {
         UpdateDialogContent(
@@ -34,7 +36,8 @@ fun UpdateDialog(
             onDismiss = onDismiss,
             onUpdate = onUpdate,
             onDelete = onDelete,
-            initialDateMillis = initialDateMillis
+            initialDateMillis = initialDateMillis,
+            useMonthYearPicker = useMonthYearPicker
         )
     }
 }
@@ -47,6 +50,7 @@ fun UpdateDialogContent(
     onUpdate: (Long) -> Unit,
     onDelete: () -> Unit,
     initialDateMillis: Long? = null,
+    useMonthYearPicker: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var dateValue by remember(initialDateMillis) { mutableStateOf(initialDateMillis) }
@@ -105,11 +109,19 @@ fun UpdateDialogContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Input
-            OfferDateField(
-                label = "Nueva fecha de vencimiento",
-                selectedDateMillis = dateValue,
-                onDateSelected = { dateValue = it }
-            )
+            if (useMonthYearPicker) {
+                MonthYearPickerField(
+                    label = "Nueva fecha de vencimiento",
+                    selectedDateMillis = dateValue,
+                    onDateSelected = { dateValue = it }
+                )
+            } else {
+                OfferDateField(
+                    label = "Nueva fecha de vencimiento",
+                    selectedDateMillis = dateValue,
+                    onDateSelected = { dateValue = it }
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

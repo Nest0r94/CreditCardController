@@ -148,7 +148,8 @@ fun CardsScreen(
                     selectedTarjeta = null
                 }
             },
-            initialDateMillis = selectedTarjeta!!.vencimientoTarjeta
+            initialDateMillis = selectedTarjeta!!.vencimientoTarjeta,
+            useMonthYearPicker = true
         )
     }
 }

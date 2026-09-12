@@ -32,6 +32,7 @@ import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.composables.cards.CardStatusPreview
 import com.example.creditcardcontroller.ui.composables.inputs.FormInput
+import com.example.creditcardcontroller.ui.composables.inputs.MonthYearPickerField
 import com.example.creditcardcontroller.ui.composables.inputs.OfferDateField
 import com.example.creditcardcontroller.ui.composables.inputs.OfferDropdown
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
@@ -194,7 +195,7 @@ fun EditCardScreen(
                 )
             }
 
-            OfferDateField(
+            MonthYearPickerField(
                 label = "Fecha de vencimiento de tarjeta",
                 selectedDateMillis = cardExpiration,
                 onDateSelected = { cardExpiration = it }
