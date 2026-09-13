@@ -72,6 +72,7 @@ fun MainScaffold() {
                 "editar_tarjeta" -> { { currentRoute = "tarjetas" } }
                 "editar_oferta" -> { { currentRoute = "promos" } }
                 "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias", "ajustes_ayuda" -> { { currentRoute = "ajustes" } }
+                "nuevo" -> { { currentRoute = "presupuesto" } }
                 else -> null
             }
 
