@@ -18,9 +18,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.creditcardcontroller.data.local.AppDatabase
+import com.example.creditcardcontroller.data.local.Frecuencia
 import com.example.creditcardcontroller.data.local.TipoDescuento
 import com.example.creditcardcontroller.data.local.entities.CategoriaEntity
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
+import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
+import com.example.creditcardcontroller.data.local.periodoDeFrecuencia
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategoria
 import com.example.creditcardcontroller.ui.composables.dialogs.UpdateDialog
@@ -32,6 +35,9 @@ import com.example.creditcardcontroller.ui.screens.promos.comp.PromosSearchBar
 import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.*
 
 @Composable
@@ -46,6 +52,7 @@ fun PromosScreen(
     val descuentos by dao.getAllDescuentos().collectAsState(initial = emptyList())
     val categorias by database.categoriaDao().getAllCategorias().collectAsState(initial = emptyList())
     val tarjetas by database.tarjetaDao().getAllTarjetas().collectAsState(initial = emptyList())
+    val movimientos by database.movimientoDao().getAllMovements().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
 
     var searchQuery by remember { mutableStateOf("") }
@@ -177,7 +184,7 @@ fun PromosScreen(
 
                 items(promosHoy) { descuento ->
                     PromoCard(
-                        promo = descuento.toPromoData(categorias),
+                        promo = descuento.toPromoData(categorias, movimientos),
                         onClick = {
                             if (descuento.isExpired()) {
                                 selectedDescuento = descuento
@@ -204,7 +211,7 @@ fun PromosScreen(
 
                 items(otrasPromos) { descuento ->
                     PromoCard(
-                        promo = descuento.toPromoData(categorias),
+                        promo = descuento.toPromoData(categorias, movimientos),
                         onClick = {
                             if (descuento.isExpired()) {
                                 selectedDescuento = descuento
@@ -297,7 +304,10 @@ private fun DescuentoEntity.isActiveToday(): Boolean {
     return diasHabiles.isEmpty() || diasHabiles.contains(todayOfWeek)
 }
 
-private fun DescuentoEntity.toPromoData(categorias: List<CategoriaEntity>): PromoData {
+private fun DescuentoEntity.toPromoData(
+    categorias: List<CategoriaEntity>,
+    movimientos: List<MovimientoEntity>
+): PromoData {
     val categoria = categorias.find { it.id == this.categoriaId }
     val icon = if (categoria != null) {
         iconoDeCategoria(categoria.icono)
@@ -321,6 +331,14 @@ private fun DescuentoEntity.toPromoData(categorias: List<CategoriaEntity>): Prom
         "Sin límite"
     }
 
+    val periodo = periodoDeFrecuencia(frecuencia, LocalDate.now())
+    val used = movimientos
+        .filter { it.descuentoId == this.id }
+        .filter {
+            Instant.ofEpochMilli(it.fecha).atZone(ZoneId.systemDefault()).toLocalDate() in periodo
+        }
+        .sumOf { it.montoReintegrable }
+
     return PromoData(
         title = nombre,
         description = descripcion,
@@ -330,7 +348,7 @@ private fun DescuentoEntity.toPromoData(categorias: List<CategoriaEntity>): Prom
             isExpired -> "VENCIDO"
             else -> expiryStr
         },
-        reimbursed = 0,
+        reimbursed = used.toInt(),
         limit = montoTope.toInt(),
         isFinalized = isExpired
     )

@@ -32,6 +32,7 @@ import com.example.creditcardcontroller.data.local.TipoMovimiento
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
+import com.example.creditcardcontroller.data.local.periodoDeFrecuencia
 import com.example.creditcardcontroller.data.local.resumen.expandirEnCuotas
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.composables.categories.colorDeCategoria
@@ -90,13 +91,11 @@ fun NewMovementScreen(
             val potentialAhorro = amountDouble * (descuento.porcentajeDescuento / 100.0)
             
             if (descuento.montoTope > 0) {
-                val startOfMonth = selectedDate.withDayOfMonth(1)
-                val endOfMonth = selectedDate.withDayOfMonth(selectedDate.lengthOfMonth())
-                
+                val periodo = periodoDeFrecuencia(descuento.frecuencia, selectedDate)
+
                 val currentPeriodMovements = movimientos.filter { mov ->
                     val movDate = Instant.ofEpochMilli(mov.fecha).atZone(ZoneId.systemDefault()).toLocalDate()
-                    mov.descuentoId == descuento.id && 
-                    !movDate.isBefore(startOfMonth) && !movDate.isAfter(endOfMonth)
+                    mov.descuentoId == descuento.id && movDate in periodo
                 }
                 
                 val usedAhorro = currentPeriodMovements.sumOf { it.montoReintegrable }
