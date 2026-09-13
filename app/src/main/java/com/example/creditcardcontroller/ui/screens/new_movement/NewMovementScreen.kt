@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.creditcardcontroller.data.local.AppDatabase
 import com.example.creditcardcontroller.data.local.SettingsDataStore
+import com.example.creditcardcontroller.data.local.TipoMovimiento
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
@@ -59,6 +61,7 @@ fun NewMovementScreen(
     val movimientos by db.movimientoDao().getAllMovements().collectAsState(initial = emptyList())
     val editTimeEnabled by settingsDataStore.editTimeEnabledFlow.collectAsState(initial = false)
 
+    var selectedTipo by remember { mutableStateOf(TipoMovimiento.GASTO) }
     var amount by remember { mutableStateOf("") }
     var selectedCategoriaId by remember { mutableStateOf<Long?>(null) }
     var selectedTarjeta by remember { mutableStateOf<TarjetaEntity?>(null) }
@@ -87,7 +90,6 @@ fun NewMovementScreen(
             val potentialAhorro = amountDouble * (descuento.porcentajeDescuento / 100.0)
             
             if (descuento.montoTope > 0) {
-                // Filtramos los movimientos que usan este descuento en el mismo mes y año
                 val startOfMonth = selectedDate.withDayOfMonth(1)
                 val endOfMonth = selectedDate.withDayOfMonth(selectedDate.lengthOfMonth())
                 
@@ -186,435 +188,465 @@ fun NewMovementScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .background(MaterialTheme.colorScheme.background),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "VALOR DEL GASTO",
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold
-        )
-        
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 16.dp)
+        TabRow(
+            selectedTabIndex = if (selectedTipo == TipoMovimiento.GASTO) 0 else 1,
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.primary,
+            indicator = { tabPositions ->
+                TabRowDefaults.SecondaryIndicator(
+                    Modifier.tabIndicatorOffset(tabPositions[if (selectedTipo == TipoMovimiento.GASTO) 0 else 1]),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            divider = {}
         ) {
-            Text(
-                text = "$",
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Bold
+            Tab(
+                selected = selectedTipo == TipoMovimiento.GASTO,
+                onClick = { selectedTipo = TipoMovimiento.GASTO },
+                text = { Text("Gasto") }
             )
-            Spacer(modifier = Modifier.width(12.dp))
-            BasicTextField(
-                value = amount,
-                onValueChange = { 
-                    if (it.isEmpty() || it.toDoubleOrNull() != null || it == ".") {
-                        amount = it 
-                    }
-                },
-                textStyle = TextStyle(
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Start
-                ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
-                modifier = Modifier.width(IntrinsicSize.Min),
-                decorationBox = { innerTextField ->
-                    if (amount.isEmpty()) {
-                        Text(
-                            text = "0.00",
-                            style = TextStyle(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                fontSize = 48.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                    }
-                    innerTextField()
-                }
+            Tab(
+                selected = selectedTipo == TipoMovimiento.INGRESO,
+                onClick = { selectedTipo = TipoMovimiento.INGRESO },
+                text = { Text("Ingreso") }
             )
         }
 
-        Surface(
-            color = MaterialTheme.colorScheme.secondaryContainer,
-            shape = RoundedCornerShape(20.dp),
-            modifier = Modifier.padding(bottom = 32.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = if (selectedTipo == TipoMovimiento.GASTO) "VALOR DEL GASTO" else "VALOR DEL INGRESO",
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold
+            )
+            
             Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(vertical = 16.dp)
             ) {
-                Icon(
-                    Icons.Default.LocalOffer,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (selectedDescuento != null) {
-                        "Ahorro Estimado: $${String.format("%.2f", ahorroEstimado)} (${selectedDescuento!!.nombre})"
-                    } else {
-                        "Sin promoción seleccionada"
-                    },
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    style = MaterialTheme.typography.bodySmall,
+                    text = "$",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 48.sp,
                     fontWeight = FontWeight.Bold
                 )
-            }
-        }
-
-        // Categoría Section
-        SectionHeader(title = "Categoría", trailing = {
-            Text(
-                text = "VER TODAS", 
-                color = MaterialTheme.colorScheme.primary, 
-                style = MaterialTheme.typography.labelSmall, 
-                fontWeight = FontWeight.Bold
-            )
-        })
-        
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            if (categorias.isEmpty()) {
-                Text(
-                    text = "No hay categorías disponibles",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    style = MaterialTheme.typography.bodySmall
+                Spacer(modifier = Modifier.width(12.dp))
+                BasicTextField(
+                    value = amount,
+                    onValueChange = { 
+                        if (it.isEmpty() || it.toDoubleOrNull() != null || it == ".") {
+                            amount = it 
+                        }
+                    },
+                    textStyle = TextStyle(
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Start
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.width(IntrinsicSize.Min),
+                    decorationBox = { innerTextField ->
+                        if (amount.isEmpty()) {
+                            Text(
+                                text = "0.00",
+                                style = TextStyle(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                                    fontSize = 48.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                        }
+                        innerTextField()
+                    }
                 )
-            } else {
-                categorias.forEach { categoria ->
-                    CategoryItemView(
-                        name = categoria.nombre,
-                        icon = iconoDeCategoria(categoria.icono),
-                        color = colorDeCategoria(categoria.color),
-                        isSelected = categoria.id == selectedCategoriaId
-                    ) { selectedCategoriaId = categoria.id }
+            }
+
+            Surface(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.padding(bottom = 32.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.LocalOffer,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (selectedDescuento != null) {
+                            "Ahorro Estimado: $${String.format("%.2f", ahorroEstimado)} (${selectedDescuento!!.nombre})"
+                        } else {
+                            "Sin promoción seleccionada"
+                        },
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.weight(1f)) {
+            // Categoría Section
+            SectionHeader(title = "Categoría", trailing = {
                 Text(
-                    text = "TARJETA", 
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                    text = "VER TODAS", 
+                    color = MaterialTheme.colorScheme.primary, 
                     style = MaterialTheme.typography.labelSmall, 
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Box {
-                    CustomDropdownSelector(
-                        text = selectedTarjeta?.let { "${it.nombre}"} ?: "",
-                        icon = Icons.Default.CreditCard
-                    ) {
-                        showTarjetaDropdown = true
+            })
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                if (categorias.isEmpty()) {
+                    Text(
+                        text = "No hay categorías disponibles",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                } else {
+                    categorias.forEach { categoria ->
+                        CategoryItemView(
+                            name = categoria.nombre,
+                            icon = iconoDeCategoria(categoria.icono),
+                            color = colorDeCategoria(categoria.color),
+                            isSelected = categoria.id == selectedCategoriaId
+                        ) { selectedCategoriaId = categoria.id }
                     }
-                    DropdownMenu(
-                        expanded = showTarjetaDropdown,
-                        onDismissRequest = { showTarjetaDropdown = false },
-                        modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
-                    ) {
-                        tarjetas.forEach { tarjeta ->
-                            DropdownMenuItem(
-                                text = { Text(tarjeta.nombre, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                                onClick = {
-                                    selectedTarjeta = tarjeta
-                                    showTarjetaDropdown = false
-                                    // Reset discount if it doesn't apply to the new card
-                                    if (selectedDescuento != null && !selectedDescuento!!.tarjetasAplicables.contains(tarjeta.id)) {
-                                        selectedDescuento = null
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "TARJETA", 
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                        style = MaterialTheme.typography.labelSmall, 
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box {
+                        CustomDropdownSelector(
+                            text = selectedTarjeta?.let { "${it.nombre}"} ?: "",
+                            icon = Icons.Default.CreditCard
+                        ) {
+                            showTarjetaDropdown = true
+                        }
+                        DropdownMenu(
+                            expanded = showTarjetaDropdown,
+                            onDismissRequest = { showTarjetaDropdown = false },
+                            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                        ) {
+                            tarjetas.forEach { tarjeta ->
+                                DropdownMenuItem(
+                                    text = { Text(tarjeta.nombre, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                                    onClick = {
+                                        selectedTarjeta = tarjeta
+                                        showTarjetaDropdown = false
+                                        if (selectedDescuento != null && !selectedDescuento!!.tarjetasAplicables.contains(tarjeta.id)) {
+                                            selectedDescuento = null
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "FECHA", 
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
-                    style = MaterialTheme.typography.labelSmall, 
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                CustomDropdownSelector(
-                    text = if (selectedDate == LocalDate.now()) "Hoy" else selectedDate.format(DateTimeFormatter.ofPattern("dd MMM")),
-                    icon = Icons.Default.CalendarToday
-                ) {
-                    showDatePicker = true
-                }
-            }
-            
-            if (editTimeEnabled) {
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "HORA", 
+                        text = "FECHA", 
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
                         style = MaterialTheme.typography.labelSmall, 
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     CustomDropdownSelector(
-                        text = selectedTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "--:--",
-                        icon = Icons.Default.AccessTime
+                        text = if (selectedDate == LocalDate.now()) "Hoy" else selectedDate.format(DateTimeFormatter.ofPattern("dd MMM")),
+                        icon = Icons.Default.CalendarToday
                     ) {
-                        showTimePicker = true
+                        showDatePicker = true
                     }
                 }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "APLICAR DESCUENTO", 
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
-            style = MaterialTheme.typography.labelSmall, 
-            fontWeight = FontWeight.Bold, 
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Box(modifier = Modifier.fillMaxWidth()) {
-            CustomDropdownSelector(
-                text = when {
-                    selectedTarjeta == null -> "Seleccione un medio de pago"
-                    selectedDescuento != null -> selectedDescuento!!.nombre
-                    else -> "Seleccionar promoción..."
-                },
-                icon = Icons.Default.LocalOffer,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (selectedTarjeta != null) {
-                    showDescuentoDropdown = true
-                }
-            }
-            DropdownMenu(
-                expanded = showDescuentoDropdown,
-                onDismissRequest = { showDescuentoDropdown = false },
-                modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                filteredDescuentos.forEach { descuento ->
-                    DropdownMenuItem(
-                        text = { Text(descuento.nombre, color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                        onClick = {
-                            selectedDescuento = descuento
-                            showDescuentoDropdown = false
-                        }
-                    )
-                }
-                if (filteredDescuentos.isEmpty()) {
-                    DropdownMenuItem(
-                        text = { Text("No hay promociones disponibles", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
-                        onClick = { showDescuentoDropdown = false }
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "DESCRIPCIÓN", 
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
-            style = MaterialTheme.typography.labelSmall, 
-            fontWeight = FontWeight.Bold, 
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = descripcion,
-            onValueChange = { descripcion = it },
-            placeholder = { Text("Ej: Cena con amigos", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            singleLine = true,
-            maxLines = 1,
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                unfocusedBorderColor = Color.Transparent,
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                cursorColor = MaterialTheme.colorScheme.primary,
-                focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                unfocusedTextColor = MaterialTheme.colorScheme.onBackground
-            )
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Compra en cuotas Card
-        Surface(
-            color = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(16.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Payments,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
+                
+                if (editTimeEnabled) {
+                    Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Compra en cuotas", 
-                            color = MaterialTheme.colorScheme.onSurface, 
+                            text = "HORA", 
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                            style = MaterialTheme.typography.labelSmall, 
                             fontWeight = FontWeight.Bold
                         )
-                        Text(
-                            text = "Dividir el pago en meses", 
-                            color = MaterialTheme.colorScheme.onSurfaceVariant, 
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    Switch(
-                        checked = esCuotas,
-                        onCheckedChange = { esCuotas = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                            checkedTrackColor = MaterialTheme.colorScheme.primary,
-                            uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    )
-                }
-
-                if (esCuotas) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 16.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text(
-                                text = "CUOTAS", 
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
-                                style = MaterialTheme.typography.labelSmall, 
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 4.dp, vertical = 2.dp)
-                            ) {
-                                IconButton(onClick = { if (cantidadCuotas > 1) cantidadCuotas-- }, modifier = Modifier.size(32.dp)) {
-                                    Icon(
-                                        imageVector = Icons.Default.Remove, 
-                                        contentDescription = null, 
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                Text(
-                                    text = cantidadCuotas.toString(),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 12.dp),
-                                    fontWeight = FontWeight.Bold
-                                )
-                                IconButton(onClick = { cantidadCuotas++ }, modifier = Modifier.size(32.dp)) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add, 
-                                        contentDescription = null, 
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = "MENSUALIDAD", 
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
-                                style = MaterialTheme.typography.labelSmall, 
-                                fontWeight = FontWeight.Bold
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            val monthlyAmount = (amount.toDoubleOrNull() ?: 0.0) / cantidadCuotas
-                            Text(
-                                text = "$ ${String.format("%.2f", monthlyAmount)}",
-                                color = MaterialTheme.colorScheme.secondary,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp
-                            )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CustomDropdownSelector(
+                            text = selectedTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "--:--",
+                            icon = Icons.Default.AccessTime
+                        ) {
+                            showTimePicker = true
                         }
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        PrimaryButton(
-            text = "Guardar Gasto",
-            onClick = {
-                val catId = selectedCategoriaId ?: categorias.firstOrNull()?.id
-                val tarjetaId = selectedTarjeta?.id
-                
-                if (catId != null && tarjetaId != null && amount.toDoubleOrNull() != null) {
-                    scope.launch {
-                        val montoTotal = amount.toDoubleOrNull() ?: 0.0
-                        val moverACuotas = esCuotas && cantidadCuotas > 1
-                        val movimiento = MovimientoEntity(
-                            descripcion = descripcion,
-                            monto = montoTotal,
-                            esCuotas = moverACuotas,
-                            cantidadCuotas = if (moverACuotas) cantidadCuotas else 1,
-                            numeroCuota = 0,
-                            fecha = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
-                            categoriaId = catId,
-                            tarjetaId = tarjetaId,
-                            descuentoId = selectedDescuento?.id,
-                            montoReintegrable = ahorroEstimado,
-                            montoReintegrado = false,
-                            hora = selectedTime?.toNanoOfDay()?.div(1_000_000)
-                        )
-                        val movimientos = if (moverACuotas) {
-                            expandirEnCuotas(movimiento, selectedTarjeta?.diaCierreResumen)
-                        } else {
-                            listOf(movimiento)
-                        }
-                        db.movimientoDao().insertAll(movimientos)
-                        com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).recalcular(tarjetaId)
-                        onBack()
+            Text(
+                text = "APLICAR DESCUENTO", 
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                style = MaterialTheme.typography.labelSmall, 
+                fontWeight = FontWeight.Bold, 
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(modifier = Modifier.fillMaxWidth()) {
+                CustomDropdownSelector(
+                    text = when {
+                        selectedTarjeta == null -> "Seleccione un medio de pago"
+                        selectedDescuento != null -> selectedDescuento!!.nombre
+                        else -> "Seleccionar promoción..."
+                    },
+                    icon = Icons.Default.LocalOffer,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (selectedTarjeta != null) {
+                        showDescuentoDropdown = true
                     }
-                } else {
-                    Toast.makeText(context, "Por favor complete los campos obligatorios", Toast.LENGTH_SHORT).show()
                 }
-            },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            icon = Icons.Default.CheckCircle
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
+                DropdownMenu(
+                    expanded = showDescuentoDropdown,
+                    onDismissRequest = { showDescuentoDropdown = false },
+                    modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    filteredDescuentos.forEach { descuento ->
+                        DropdownMenuItem(
+                            text = { Text(descuento.nombre, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                            onClick = {
+                                selectedDescuento = descuento
+                                showDescuentoDropdown = false
+                            }
+                        )
+                    }
+                    if (filteredDescuentos.isEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("No hay promociones disponibles", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
+                            onClick = { showDescuentoDropdown = false }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "DESCRIPCIÓN", 
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                style = MaterialTheme.typography.labelSmall, 
+                fontWeight = FontWeight.Bold, 
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = descripcion,
+                onValueChange = { descripcion = it },
+                placeholder = { Text("Ej: Cena con amigos", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true,
+                maxLines = 1,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onBackground
+                )
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Payments,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Compra en cuotas", 
+                                color = MaterialTheme.colorScheme.onSurface, 
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Dividir el pago en meses", 
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, 
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Switch(
+                            checked = esCuotas,
+                            onCheckedChange = { esCuotas = it },
+                            enabled = selectedTipo == TipoMovimiento.GASTO,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        )
+                    }
+
+                    if (esCuotas && selectedTipo == TipoMovimiento.GASTO) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text(
+                                    text = "CUOTAS", 
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                                    style = MaterialTheme.typography.labelSmall, 
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                                ) {
+                                    IconButton(onClick = { if (cantidadCuotas > 1) cantidadCuotas-- }, modifier = Modifier.size(32.dp)) {
+                                        Icon(
+                                            imageVector = Icons.Default.Remove, 
+                                            contentDescription = null, 
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Text(
+                                        text = cantidadCuotas.toString(),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(horizontal = 12.dp),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    IconButton(onClick = { cantidadCuotas++ }, modifier = Modifier.size(32.dp)) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add, 
+                                            contentDescription = null, 
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    text = "MENSUALIDAD", 
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                                    style = MaterialTheme.typography.labelSmall, 
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                val monthlyAmount = (amount.toDoubleOrNull() ?: 0.0) / cantidadCuotas
+                                Text(
+                                    text = "$ ${String.format("%.2f", monthlyAmount)}",
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            PrimaryButton(
+                text = if (selectedTipo == TipoMovimiento.GASTO) "Guardar Gasto" else "Guardar Ingreso",
+                onClick = {
+                    val catId = selectedCategoriaId ?: categorias.firstOrNull()?.id
+                    val tarjetaId = selectedTarjeta?.id
+                    
+                    if (catId != null && tarjetaId != null && amount.toDoubleOrNull() != null) {
+                        scope.launch {
+                            val montoTotal = amount.toDoubleOrNull() ?: 0.0
+                            val moverACuotas = esCuotas && cantidadCuotas > 1 && selectedTipo == TipoMovimiento.GASTO
+                            val movimiento = MovimientoEntity(
+                                descripcion = descripcion,
+                                monto = montoTotal,
+                                esCuotas = moverACuotas,
+                                cantidadCuotas = if (moverACuotas) cantidadCuotas else 1,
+                                numeroCuota = 0,
+                                fecha = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+                                categoriaId = catId,
+                                tarjetaId = tarjetaId,
+                                descuentoId = selectedDescuento?.id,
+                                montoReintegrable = ahorroEstimado,
+                                montoReintegrado = false,
+                                hora = selectedTime?.toNanoOfDay()?.div(1_000_000),
+                                tipo = selectedTipo
+                            )
+                            val movimientos = if (moverACuotas) {
+                                expandirEnCuotas(movimiento, selectedTarjeta?.diaCierreResumen)
+                            } else {
+                                listOf(movimiento)
+                            }
+                            db.movimientoDao().insertAll(movimientos)
+                            com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).recalcular(tarjetaId)
+                            onBack()
+                        }
+                    } else {
+                        Toast.makeText(context, "Por favor complete los campos obligatorios", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                icon = Icons.Default.CheckCircle
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+        }
     }
 }
 

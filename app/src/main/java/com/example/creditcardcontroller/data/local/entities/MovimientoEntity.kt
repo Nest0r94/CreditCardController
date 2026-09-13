@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.example.creditcardcontroller.data.local.TipoMovimiento
 
 @Entity(
     tableName = "movimientos",
@@ -46,5 +47,6 @@ data class MovimientoEntity(
     val descuentoId: Long?,
     val montoReintegrable: Double,
     val montoReintegrado: Boolean,
-    val hora: Long? = null
+    val hora: Long? = null,
+    val tipo: TipoMovimiento = TipoMovimiento.GASTO
 )

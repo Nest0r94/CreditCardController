@@ -15,3 +15,7 @@ enum class AppTheme {
 enum class TipoMedioPago {
     CUENTA, CREDITO, DEBITO
 }
+
+enum class TipoMovimiento {
+    GASTO, INGRESO, REINTEGRO
+}

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.creditcardcontroller.data.local.TipoMedioPago
+import com.example.creditcardcontroller.data.local.TipoMovimiento
 import com.example.creditcardcontroller.data.local.dao.CategoriaDao
 import com.example.creditcardcontroller.data.local.dao.MovimientoDao
 import com.example.creditcardcontroller.data.local.dao.PresupuestoDao
@@ -65,9 +66,15 @@ class BalancesViewModel(
             it.fecha in startOfMonth..endOfMonth
         }
         
-        val totalGasto = movimientosMes.sumOf { it.monto }
-        val gastoCuotas = movimientosMes.filter { it.esCuotas }.sumOf { it.monto }
-        val gastoUnPago = movimientosMes.filter { !it.esCuotas }.sumOf { it.monto }
+        val totalGasto = movimientosMes.sumOf { 
+            when (it.tipo) {
+                TipoMovimiento.GASTO -> it.monto
+                TipoMovimiento.INGRESO -> -it.monto
+                TipoMovimiento.REINTEGRO -> 0.0
+            }
+        }
+        val gastoCuotas = movimientosMes.filter { it.esCuotas && it.tipo == TipoMovimiento.GASTO }.sumOf { it.monto }
+        val gastoUnPago = movimientosMes.filter { !it.esCuotas && it.tipo == TipoMovimiento.GASTO }.sumOf { it.monto }
 
         val totalPresupuesto = presupuestos.filter { 
             it.mes == selectedDate.monthValue && 

@@ -49,7 +49,13 @@ class BackupManager(private val db: AppDatabase) {
                     db.descuentoDao().insertAll(data.descuentos)
                 }
                 if (data.movimientos.isNotEmpty()) {
-                    db.movimientoDao().insertAll(data.movimientos)
+                    // Si el backup es de una versión vieja, aseguramos que el tipo sea GASTO
+                    val movimientosProcesados = data.movimientos.map { mov ->
+                        // Si por algún motivo el tipo viene nulo desde GSON por ser backup viejo
+                        @Suppress("SENSELESS_COMPARISON")
+                        if (mov.tipo == null) mov.copy(tipo = com.example.creditcardcontroller.data.local.TipoMovimiento.GASTO) else mov
+                    }
+                    db.movimientoDao().insertAll(movimientosProcesados)
                 }
                 if (data.presupuesto.isNotEmpty()) {
                     db.presupuestoDao().insertAll(data.presupuesto)

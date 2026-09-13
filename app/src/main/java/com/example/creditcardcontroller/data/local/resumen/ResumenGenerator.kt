@@ -2,6 +2,7 @@ package com.example.creditcardcontroller.data.local.resumen
 
 import com.example.creditcardcontroller.data.local.AppDatabase
 import com.example.creditcardcontroller.data.local.TipoMedioPago
+import com.example.creditcardcontroller.data.local.TipoMovimiento
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.ResumenEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
@@ -100,7 +101,13 @@ class ResumenGenerator(private val db: AppDatabase) {
     private fun calcularTotal(movimientos: List<MovimientoEntity>, diaCierre: Int, periodo: YearMonth): Double {
         var total = 0.0
         for (m in movimientos) {
-            if (periodo == periodoResumen(m.fecha, diaCierre)) total += m.monto
+            if (periodo == periodoResumen(m.fecha, diaCierre)) {
+                when (m.tipo) {
+                    TipoMovimiento.GASTO -> total += m.monto
+                    TipoMovimiento.INGRESO -> total -= m.monto
+                    TipoMovimiento.REINTEGRO -> { /* Por ahora no suma ni resta según instrucción */ }
+                }
+            }
         }
         return total
     }

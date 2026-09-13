@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.creditcardcontroller.data.local.SettingsDataStore
+import com.example.creditcardcontroller.data.local.backup.BackupManager
 import com.example.creditcardcontroller.data.local.dao.PresupuestoDao
 import com.example.creditcardcontroller.data.local.entities.PresupuestoEntity
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +15,8 @@ import java.time.YearMonth
 
 class OnboardingViewModel(
     private val presupuestoDao: PresupuestoDao,
-    private val settingsDataStore: SettingsDataStore
+    private val settingsDataStore: SettingsDataStore,
+    private val backupManager: BackupManager
 ) : ViewModel() {
 
     private val _ingresoMensual = MutableStateFlow("")
@@ -33,6 +35,16 @@ class OnboardingViewModel(
     fun updateLimiteUnPago(value: String) { _limiteUnPago.value = value }
     fun updateLimiteCuotas(value: String) { _limiteCuotas.value = value }
     fun updateImpuestoSellos(value: String) { _impuestoSellos.value = value }
+
+    fun restoreBackup(json: String, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            val success = backupManager.restaurarJson(json)
+            if (success) {
+                settingsDataStore.setOnboardingCompleted(true)
+                onComplete()
+            }
+        }
+    }
 
     fun completeOnboarding(onComplete: () -> Unit) {
         viewModelScope.launch {
@@ -82,12 +94,13 @@ class OnboardingViewModel(
 
     class Factory(
         private val presupuestoDao: PresupuestoDao,
-        private val settingsDataStore: SettingsDataStore
+        private val settingsDataStore: SettingsDataStore,
+        private val backupManager: BackupManager
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(OnboardingViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return OnboardingViewModel(presupuestoDao, settingsDataStore) as T
+                return OnboardingViewModel(presupuestoDao, settingsDataStore, backupManager) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

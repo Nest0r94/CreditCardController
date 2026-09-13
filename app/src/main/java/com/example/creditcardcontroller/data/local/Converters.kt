@@ -32,4 +32,14 @@ class Converters {
     fun toTipoMedioPago(value: String?): TipoMedioPago? {
         return value?.let { TipoMedioPago.valueOf(it) }
     }
+
+    @TypeConverter
+    fun fromTipoMovimiento(value: TipoMovimiento?): String? {
+        return value?.name
+    }
+
+    @TypeConverter
+    fun toTipoMovimiento(value: String?): TipoMovimiento? {
+        return value?.let { TipoMovimiento.valueOf(it) }
+    }
 }

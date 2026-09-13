@@ -1,5 +1,9 @@
 package com.example.creditcardcontroller.ui.screens.onboarding
 
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -14,12 +18,14 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.AddChart
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Percent
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -28,20 +34,51 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.creditcardcontroller.data.local.AppDatabase
 import com.example.creditcardcontroller.data.local.SettingsDataStore
-import androidx.compose.ui.platform.LocalContext
+import com.example.creditcardcontroller.data.local.backup.BackupManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun OnboardingScreen(
     onFinished: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val db = remember { AppDatabase.getDatabase(context) }
     val settingsDataStore = remember { SettingsDataStore(context) }
+    val backupManager = remember { BackupManager(db) }
     val viewModel: OnboardingViewModel = viewModel(
-        factory = OnboardingViewModel.Factory(db.presupuestoDao(), settingsDataStore)
+        factory = OnboardingViewModel.Factory(db.presupuestoDao(), settingsDataStore, backupManager)
     )
 
     var currentStep by remember { mutableIntStateOf(1) }
+    var importing by remember { mutableStateOf(false) }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let { selectedUri ->
+            importing = true
+            scope.launch {
+                try {
+                    val json = withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(selectedUri)?.bufferedReader()?.use { it.readText() }
+                    }
+                    if (json != null) {
+                        viewModel.restoreBackup(json) {
+                            Toast.makeText(context, "Backup restaurado con éxito", Toast.LENGTH_SHORT).show()
+                            onFinished()
+                        }
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Error al cargar el backup", Toast.LENGTH_SHORT).show()
+                } finally {
+                    importing = false
+                }
+            }
+        }
+    }
 
     val ingreso by viewModel.ingresoMensual.collectAsState()
     val limite1 by viewModel.limiteUnPago.collectAsState()
@@ -128,14 +165,37 @@ fun OnboardingScreen(
                 label = "onboarding_step"
             ) { step ->
                 when (step) {
-                    1 -> StepContent(
-                        title = "Ingreso Mensual",
-                        description = "¿Cuál es tu sueldo mensual?",
-                        icon = Icons.Default.AddChart,
-                        value = ingreso,
-                        onValueChange = viewModel::updateIngreso,
-                        label = "Monto del ingreso"
-                    )
+                    1 -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        StepContent(
+                            title = "Ingreso Mensual",
+                            description = "¿Cuál es tu sueldo mensual?",
+                            icon = Icons.Default.AddChart,
+                            value = ingreso,
+                            onValueChange = viewModel::updateIngreso,
+                            label = "Monto del ingreso"
+                        )
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        Text(
+                            text = "O si ya usaste la app antes:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        
+                        TextButton(
+                            onClick = { importLauncher.launch(arrayOf("application/json")) },
+                            enabled = !importing
+                        ) {
+                            if (importing) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            } else {
+                                Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Restaurar desde Backup")
+                            }
+                        }
+                    }
                     2 -> StepContent(
                         title = "Límite 1 Pago",
                         description = "Ingresá un límite para tus gastos mensuales en tarjetas de créditos en 1 pago. No permitas que el resumen de tu tarjeta sobrepase tu salario.",

@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.creditcardcontroller.data.local.TipoMovimiento
 import com.example.creditcardcontroller.data.local.entities.CategoriaEntity
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
@@ -201,7 +202,15 @@ fun CardItem(tarjeta: TarjetaEntity) {
 @Composable
 fun CategoryExpensesSection(movimientos: List<MovimientoEntity>, categorias: List<CategoriaEntity>) {
     val categoryTotals = movimientos.groupBy { it.categoriaId }
-        .mapValues { it.value.sumOf { m -> m.monto } }
+        .mapValues { 
+            it.value.sumOf { m -> 
+                when (m.tipo) {
+                    TipoMovimiento.GASTO -> m.monto
+                    TipoMovimiento.INGRESO -> -m.monto
+                    TipoMovimiento.REINTEGRO -> 0.0
+                }
+            } 
+        }
     
     val totalAmount = categoryTotals.values.sum()
     
@@ -368,11 +377,22 @@ fun MovementItem(movimiento: MovimientoEntity, categoria: CategoriaEntity?, tarj
             }
         }
         
+        val color = when (movimiento.tipo) {
+            TipoMovimiento.GASTO -> Color(0xFFFFAB91)
+            TipoMovimiento.INGRESO -> Color(0xFF81C784)
+            TipoMovimiento.REINTEGRO -> Color(0xFF64B5F6)
+        }
+        val prefix = when (movimiento.tipo) {
+            TipoMovimiento.GASTO -> "-"
+            TipoMovimiento.INGRESO -> "+"
+            TipoMovimiento.REINTEGRO -> ""
+        }
+
         Text(
-            "-${formatCurrency(movimiento.monto)}",
+            "$prefix${formatCurrency(movimiento.monto)}",
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFFFFAB91)
+            color = color
         )
     }
 }

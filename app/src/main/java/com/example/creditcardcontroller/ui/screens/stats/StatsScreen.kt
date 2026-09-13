@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.creditcardcontroller.data.local.AppDatabase
+import com.example.creditcardcontroller.data.local.TipoMovimiento
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.ui.composables.categories.colorDeCategoria
 import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategoria
@@ -57,7 +58,13 @@ fun StatsScreen(modifier: Modifier = Modifier) {
     }
 
     val totalMensual = remember(filteredMovements) {
-        filteredMovements.sumOf { it.monto }
+        filteredMovements.sumOf { 
+            when (it.tipo) {
+                TipoMovimiento.GASTO -> it.monto
+                TipoMovimiento.INGRESO -> -it.monto
+                TipoMovimiento.REINTEGRO -> 0.0
+            }
+        }
     }
 
     FinancialSurface(modifier = modifier) {
@@ -240,11 +247,22 @@ fun MovementItem(
             }
 
             Column(horizontalAlignment = Alignment.End) {
+                val sign = when (movimiento.tipo) {
+                    TipoMovimiento.GASTO -> "-"
+                    TipoMovimiento.INGRESO -> "+"
+                    TipoMovimiento.REINTEGRO -> ""
+                }
+                val color = when (movimiento.tipo) {
+                    TipoMovimiento.GASTO -> MaterialTheme.colorScheme.onSurface
+                    TipoMovimiento.INGRESO -> Color(0xFF81C784)
+                    TipoMovimiento.REINTEGRO -> Color(0xFF64B5F6)
+                }
+
                 Text(
-                    text = "$ ${formatAmount(movimiento.monto)}",
+                    text = "$sign$ ${formatAmount(movimiento.monto)}",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = color,
                     textAlign = TextAlign.End
                 )
                 IconButton(
