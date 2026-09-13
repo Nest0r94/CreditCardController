@@ -5,6 +5,7 @@ import com.example.creditcardcontroller.ui.util.fechaDesdeDia
 import com.example.creditcardcontroller.ui.util.periodoResumen
 import java.time.Instant
 import java.time.ZoneId
+import java.util.UUID
 
 fun expandirEnCuotas(movimiento: MovimientoEntity, diaCierre: Int?): List<MovimientoEntity> {
     val n = movimiento.cantidadCuotas.coerceAtLeast(1)
@@ -14,6 +15,7 @@ fun expandirEnCuotas(movimiento: MovimientoEntity, diaCierre: Int?): List<Movimi
         return listOf(movimiento.copy(numeroCuota = 0))
     }
 
+    val cuotaGroupId = UUID.randomUUID().toString()
     val montoBase = redondear(total / n)
     val diaOriginal = Instant.ofEpochMilli(movimiento.fecha)
         .atZone(ZoneId.systemDefault())
@@ -35,7 +37,8 @@ fun expandirEnCuotas(movimiento: MovimientoEntity, diaCierre: Int?): List<Movimi
             numeroCuota = k,
             fecha = fecha,
             hora = if (k == 1) movimiento.hora else null,
-            montoReintegrable = if (k == 1) movimiento.montoReintegrable else 0.0
+            montoReintegrable = if (k == 1) movimiento.montoReintegrable else 0.0,
+            cuotaGroupId = cuotaGroupId
         )
     }
 }

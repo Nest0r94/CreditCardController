@@ -174,14 +174,38 @@ fun StatsScreen(modifier: Modifier = Modifier) {
             onConfirm = {
                 movementToDelete?.let { mov ->
                     scope.launch {
-                        db.movimientoDao().delete(mov)
+                        if (mov.cuotaGroupId != null) {
+                            db.movimientoDao().deleteByGroupId(mov.cuotaGroupId)
+                        } else if (mov.esCuotas && mov.cantidadCuotas > 1 && mov.descripcion.contains(" (cuota ")) {
+                            // Heurística para movimientos antiguos sin cuotaGroupId
+                            val baseDesc = mov.descripcion.substringBeforeLast(" (cuota ")
+                            val allMovs = db.movimientoDao().getAllSync()
+                            val related = allMovs.filter {
+                                it.esCuotas && 
+                                it.tarjetaId == mov.tarjetaId &&
+                                it.cantidadCuotas == mov.cantidadCuotas &&
+                                it.descripcion.startsWith(baseDesc) &&
+                                it.descripcion.contains(" (cuota ")
+                            }
+                            if (related.isNotEmpty()) {
+                                related.forEach { db.movimientoDao().delete(it) }
+                            } else {
+                                db.movimientoDao().delete(mov)
+                            }
+                        } else {
+                            db.movimientoDao().delete(mov)
+                        }
                         com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).recalcular(mov.tarjetaId)
                     }
                 }
                 movementToDelete = null
             },
             title = "Eliminar movimiento",
-            body = "¿Estás seguro de que deseas eliminar este movimiento? Se ajustarán los balances correspondientes."
+            body = if (movementToDelete?.esCuotas == true && (movementToDelete?.cantidadCuotas ?: 0) > 1) {
+                "Este movimiento es parte de una compra en cuotas. ¿Estás seguro de que deseas eliminar TODAS las cuotas de esta compra?"
+            } else {
+                "¿Estás seguro de que deseas eliminar este movimiento? Se ajustarán los balances correspondientes."
+            }
         )
     }
 }

@@ -24,6 +24,12 @@ interface MovimientoDao {
     @Delete
     suspend fun delete(movimiento: MovimientoEntity)
 
+    @Query("DELETE FROM movimientos WHERE cuotaGroupId = :groupId")
+    suspend fun deleteByGroupId(groupId: String)
+
+    @Query("SELECT * FROM movimientos WHERE cuotaGroupId = :groupId")
+    suspend fun getByGroupId(groupId: String): List<MovimientoEntity>
+
     @Query("SELECT * FROM movimientos WHERE id = :id")
     suspend fun getById(id: Long): MovimientoEntity?
 

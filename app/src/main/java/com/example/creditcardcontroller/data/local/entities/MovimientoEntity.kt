@@ -48,5 +48,6 @@ data class MovimientoEntity(
     val montoReintegrable: Double,
     val montoReintegrado: Boolean,
     val hora: Long? = null,
-    val tipo: TipoMovimiento = TipoMovimiento.GASTO
+    val tipo: TipoMovimiento = TipoMovimiento.GASTO,
+    val cuotaGroupId: String? = null
 )
