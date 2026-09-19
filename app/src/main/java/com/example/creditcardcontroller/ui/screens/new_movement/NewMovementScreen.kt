@@ -61,6 +61,7 @@ fun NewMovementScreen(
     val categorias by db.categoriaDao().getAllCategorias().collectAsState(initial = emptyList())
     val movimientos by db.movimientoDao().getAllMovements().collectAsState(initial = emptyList())
     val editTimeEnabled by settingsDataStore.editTimeEnabledFlow.collectAsState(initial = false)
+    val initialInstallmentEnabled by settingsDataStore.initialInstallmentEnabledFlow.collectAsState(initial = false)
 
     var selectedTipo by remember { mutableStateOf(TipoMovimiento.GASTO) }
     var amount by remember { mutableStateOf("") }
@@ -78,6 +79,7 @@ fun NewMovementScreen(
     var descripcion by remember { mutableStateOf("") }
     var esCuotas by remember { mutableStateOf(false) }
     var cantidadCuotas by remember { mutableStateOf(3) }
+    var cuotaInicial by remember { mutableStateOf(1) }
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -557,7 +559,14 @@ fun NewMovementScreen(
                                         .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                                         .padding(horizontal = 4.dp, vertical = 2.dp)
                                 ) {
-                                    IconButton(onClick = { if (cantidadCuotas > 1) cantidadCuotas-- }, modifier = Modifier.size(32.dp)) {
+                                    IconButton(onClick = { 
+                                        if (cantidadCuotas > 1) {
+                                            cantidadCuotas--
+                                            if (cuotaInicial > cantidadCuotas) {
+                                                cuotaInicial = cantidadCuotas
+                                            }
+                                        }
+                                    }, modifier = Modifier.size(32.dp)) {
                                         Icon(
                                             imageVector = Icons.Default.Remove, 
                                             contentDescription = null, 
@@ -596,6 +605,52 @@ fun NewMovementScreen(
                                 )
                             }
                         }
+
+                        if (initialInstallmentEnabled) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "CUOTA INICIAL", 
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                                        style = MaterialTheme.typography.labelSmall, 
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                                            .padding(horizontal = 4.dp, vertical = 2.dp)
+                                    ) {
+                                        IconButton(onClick = { if (cuotaInicial > 1) cuotaInicial-- }, modifier = Modifier.size(32.dp)) {
+                                            Icon(
+                                                imageVector = Icons.Default.Remove, 
+                                                contentDescription = null, 
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Text(
+                                            text = cuotaInicial.toString(),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(horizontal = 12.dp),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        IconButton(onClick = { if (cuotaInicial < cantidadCuotas) cuotaInicial++ }, modifier = Modifier.size(32.dp)) {
+                                            Icon(
+                                                imageVector = Icons.Default.Add, 
+                                                contentDescription = null, 
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -628,7 +683,7 @@ fun NewMovementScreen(
                                 tipo = selectedTipo
                             )
                             val movimientos = if (moverACuotas) {
-                                expandirEnCuotas(movimiento, selectedTarjeta?.diaCierreResumen)
+                                expandirEnCuotas(movimiento, selectedTarjeta?.diaCierreResumen, if (initialInstallmentEnabled) cuotaInicial else 1)
                             } else {
                                 listOf(movimiento)
                             }

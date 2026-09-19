@@ -72,6 +72,7 @@ fun AppPreferencesScreen(modifier: Modifier = Modifier) {
     val autoLockEnabled by settingsDataStore.autoLockEnabledFlow.collectAsState(initial = false)
     val stampTaxPercentage by settingsDataStore.stampTaxPercentageFlow.collectAsState(initial = 1.2)
     val editTimeEnabled by settingsDataStore.editTimeEnabledFlow.collectAsState(initial = false)
+    val initialInstallmentEnabled by settingsDataStore.initialInstallmentEnabledFlow.collectAsState(initial = false)
 
     val themeLabel = when (currentTheme) {
         AppTheme.DARK -> "Oscuro"
@@ -202,6 +203,17 @@ fun AppPreferencesScreen(modifier: Modifier = Modifier) {
                     onCheckedChange = {
                         scope.launch {
                             settingsDataStore.setEditTimeEnabled(it)
+                        }
+                    }
+                )
+
+                SettingItemSwitch(
+                    title = "Habilitar seteo de cuota inicial",
+                    subtitle = "Habilita elegir la cuota inicial al agregar un gasto en cuotas",
+                    checked = initialInstallmentEnabled,
+                    onCheckedChange = {
+                        scope.launch {
+                            settingsDataStore.setInitialInstallmentEnabled(it)
                         }
                     }
                 )

@@ -21,6 +21,7 @@ class SettingsDataStore(private val context: Context) {
         private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_completed")
         private val STAMP_TAX_PERCENTAGE_KEY = stringPreferencesKey("stamp_tax_percentage")
         private val EDIT_TIME_ENABLED_KEY = booleanPreferencesKey("edit_time_enabled")
+        private val INITIAL_INSTALLMENT_ENABLED_KEY = booleanPreferencesKey("initial_installment_enabled")
     }
 
     val themeFlow: Flow<AppTheme> = context.dataStore.data
@@ -58,6 +59,11 @@ class SettingsDataStore(private val context: Context) {
             preferences[EDIT_TIME_ENABLED_KEY] ?: false
         }
 
+    val initialInstallmentEnabledFlow: Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[INITIAL_INSTALLMENT_ENABLED_KEY] ?: false
+        }
+
     suspend fun setTheme(theme: AppTheme) {
         context.dataStore.edit { preferences ->
             preferences[THEME_KEY] = theme.name
@@ -91,6 +97,12 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setEditTimeEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[EDIT_TIME_ENABLED_KEY] = enabled
+        }
+    }
+
+    suspend fun setInitialInstallmentEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[INITIAL_INSTALLMENT_ENABLED_KEY] = enabled
         }
     }
 }

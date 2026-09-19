@@ -7,7 +7,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.util.UUID
 
-fun expandirEnCuotas(movimiento: MovimientoEntity, diaCierre: Int?): List<MovimientoEntity> {
+fun expandirEnCuotas(movimiento: MovimientoEntity, diaCierre: Int?, cuotaInicial: Int = 1): List<MovimientoEntity> {
     val n = movimiento.cantidadCuotas.coerceAtLeast(1)
     val total = movimiento.monto
 
@@ -24,12 +24,12 @@ fun expandirEnCuotas(movimiento: MovimientoEntity, diaCierre: Int?): List<Movimi
     val base = periodoResumen(movimiento.fecha, diaCierre)
     val dia = if (diaCierre != null && diaCierre in 1..31) minOf(diaOriginal, diaCierre) else diaOriginal
 
-    return (1..n).map { k ->
-        val fecha = if (k == 1) {
+    return (cuotaInicial..n).map { k ->
+        val fecha = if (k == cuotaInicial) {
             movimiento.fecha
         } else {
-            // Calculamos el mes objetivo de la cuota basándonos en el período de la primera cuota
-            val mesObjetivo = base.plusMonths((k - 1).toLong())
+            // Calculamos el mes objetivo de la cuota basándonos en el período de la primera cuota registrada
+            val mesObjetivo = base.plusMonths((k - cuotaInicial).toLong())
             // Para las cuotas futuras, usamos un día seguro (por ejemplo el día 1 del mes objetivo) 
             // de modo que la función periodoResumen devuelva exactamente ese mesObjetivo 
             // y no se desfase si el día de compra original es mayor al día de cierre.
@@ -41,8 +41,8 @@ fun expandirEnCuotas(movimiento: MovimientoEntity, diaCierre: Int?): List<Movimi
             cantidadCuotas = n,
             numeroCuota = k,
             fecha = fecha,
-            hora = if (k == 1) movimiento.hora else null,
-            montoReintegrable = if (k == 1) movimiento.montoReintegrable else 0.0,
+            hora = if (k == cuotaInicial) movimiento.hora else null,
+            montoReintegrable = if (k == cuotaInicial) movimiento.montoReintegrable else 0.0,
             cuotaGroupId = cuotaGroupId
         )
     }
