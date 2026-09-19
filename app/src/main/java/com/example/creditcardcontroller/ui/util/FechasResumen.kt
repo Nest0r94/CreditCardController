@@ -34,8 +34,16 @@ private fun proximaFechaDeDia(dia: Int, hoy: LocalDate, zone: ZoneId): Long {
 fun periodoResumen(fechaMillis: Long, diaCierre: Int?): YearMonth {
     val mes = YearMonth.from(Instant.ofEpochMilli(fechaMillis).atZone(ZoneId.systemDefault()).toLocalDate())
     if (diaCierre == null || diaCierre !in 1..31) return mes
-    return if (fechaMillis <= fechaDesdeDia(diaCierre, mes)) mes else mes.plusMonths(1)
+    
+    val fechaCierreEsteMes = fechaDesdeDia(diaCierre, mes)
+    
+    // Si la fecha del movimiento es posterior a la fecha de cierre de este mes,
+    // pertenece al resumen que cierra el mes que viene.
+    return if (fechaMillis <= fechaCierreEsteMes) mes else mes.plusMonths(1)
 }
+
+fun periodoVencimientoResumen(fechaMillis: Long, diaCierre: Int?): YearMonth =
+    periodoResumen(fechaMillis, diaCierre)
 
 fun periodoDe(anio: Int, mes: Int): String = "%04d-%02d".format(anio, mes)
 

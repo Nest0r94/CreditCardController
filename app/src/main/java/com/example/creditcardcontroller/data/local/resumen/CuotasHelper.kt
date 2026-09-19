@@ -28,7 +28,12 @@ fun expandirEnCuotas(movimiento: MovimientoEntity, diaCierre: Int?): List<Movimi
         val fecha = if (k == 1) {
             movimiento.fecha
         } else {
-            fechaDesdeDia(dia, base.plusMonths((k - 1).toLong()))
+            // Calculamos el mes objetivo de la cuota basándonos en el período de la primera cuota
+            val mesObjetivo = base.plusMonths((k - 1).toLong())
+            // Para las cuotas futuras, usamos un día seguro (por ejemplo el día 1 del mes objetivo) 
+            // de modo que la función periodoResumen devuelva exactamente ese mesObjetivo 
+            // y no se desfase si el día de compra original es mayor al día de cierre.
+            fechaDesdeDia(if (diaCierre != null) minOf(dia, diaCierre) else dia, mesObjetivo)
         }
         movimiento.copy(
             descripcion = "${movimiento.descripcion} (cuota $k/$n)",

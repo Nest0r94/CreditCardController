@@ -89,7 +89,7 @@ fun EditCardScreen(
 
         scope.launch {
             if (tarjetaId == null) {
-                tarjetaDao.insert(
+                val newId = tarjetaDao.insert(
                     TarjetaEntity(
                         nombre = nombre,
                         tipo = cardTipo,
@@ -97,9 +97,15 @@ fun EditCardScreen(
                         limiteCuotas = limiteCuotas,
                         diaCierreResumen = diaCierre,
                         diaVencimientoResumen = diaVencimiento,
-                        vencimientoTarjeta = vencimientoTarjeta
+                        vencimientoTarjeta = vencimientoTarjeta,
+                        primerVencimientoResumen = dueDate
                     )
                 )
+                if (esCredito && diaVencimiento != null) {
+                    com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(
+                        AppDatabase.getDatabase(context)
+                    ).recalcular(newId)
+                }
             } else {
                 tarjetaDao.getById(tarjetaId)?.let { existing ->
                     tarjetaDao.update(
@@ -110,7 +116,8 @@ fun EditCardScreen(
                             limiteCuotas = limiteCuotas,
                             diaCierreResumen = diaCierre,
                             diaVencimientoResumen = diaVencimiento,
-                            vencimientoTarjeta = vencimientoTarjeta
+                            vencimientoTarjeta = vencimientoTarjeta,
+                            primerVencimientoResumen = dueDate
                         )
                     )
                     com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(

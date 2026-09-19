@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.creditcardcontroller.data.local.AppDatabase
+import com.example.creditcardcontroller.data.local.resumen.ResumenGenerator
 import com.example.creditcardcontroller.ui.composables.layout.DateHeader
 import com.example.creditcardcontroller.ui.composables.layout.FinancialSurface
 import com.example.creditcardcontroller.ui.composables.layout.MonthPickerDialog
@@ -44,12 +46,18 @@ fun BalancesScreen(
             AppDatabase.getDatabase(LocalContext.current).movimientoDao(),
             AppDatabase.getDatabase(LocalContext.current).categoriaDao(),
             AppDatabase.getDatabase(LocalContext.current).presupuestoDao(),
+            AppDatabase.getDatabase(LocalContext.current).resumenDao(),
         )
     )
 ) {
     val state by viewModel.uiState.collectAsState()
     var showMonthPicker by remember { mutableStateOf(false) }
     var showYearPicker by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        ResumenGenerator(AppDatabase.getDatabase(context)).generarResumenesPendientes()
+    }
 
     FinancialSurface(modifier = modifier) {
         LazyColumn(
@@ -64,8 +72,10 @@ fun BalancesScreen(
                     selectedDate = state.selectedDate,
                     onMonthClick = { showMonthPicker = true },
                     onYearClick = { showYearPicker = true },
-                    onPreviousMonth = { viewModel.updateSelectedDate(state.selectedDate.minusMonths(1)) },
-                    onNextMonth = { viewModel.updateSelectedDate(state.selectedDate.plusMonths(1)) }
+                    onPreviousMonth = { viewModel.selectPrevMonth() },
+                    onNextMonth = { viewModel.selectNextMonth() },
+                    prevEnabled = state.canGoPrev,
+                    nextEnabled = state.canGoNext
                 )
             }
 

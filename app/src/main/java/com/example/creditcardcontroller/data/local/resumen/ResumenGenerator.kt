@@ -7,11 +7,13 @@ import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.ResumenEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 import com.example.creditcardcontroller.ui.util.fechaDesdeDia
-import com.example.creditcardcontroller.ui.util.periodoResumen
+import com.example.creditcardcontroller.ui.util.periodoDe
+import com.example.creditcardcontroller.ui.util.periodoVencimientoResumen
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
+import java.time.ZoneOffset
 
 class ResumenGenerator(private val db: AppDatabase) {
 
@@ -40,29 +42,41 @@ class ResumenGenerator(private val db: AppDatabase) {
 
         val existentes = db.resumenDao().getByTarjetaSync(tarjeta.id).associateBy { it.periodo }
 
-        val hoy = LocalDate.now()
-        val hoyInicio = hoy.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val ultimoPeriodo = if (fechaDesdeDia(diaCierre, YearMonth.from(hoy)) <= hoyInicio) {
-            YearMonth.from(hoy)
-        } else {
-            YearMonth.from(hoy).minusMonths(1)
+        val hoy = YearMonth.now()
+
+        // Ancla del primer resumen: el existente más antiguo, o la fecha de vencimiento
+        // elegida al crear la tarjeta, o el primer movimiento, o el mes actual.
+        val inicioPeriodo = existentes.keys.minOrNull()?.let { YearMonth.parse(it) }
+            ?: tarjeta.primerVencimientoResumen?.let { toYearMonthUtc(it) }
+            ?: movimientos.minOfOrNull { periodoVencimientoResumen(it.fecha, diaCierre) }
+            ?: hoy
+
+        val primerPeriodo = minOf(inicioPeriodo, hoy)
+
+        // El resumen pendiente actual es el siguiente al último cuyo vencimiento ya pasó.
+        val base = primerPeriodo.minusMonths(1)
+        val ultimoVencido = generateSequence(base) { it.plusMonths(1) }
+            .takeWhile { fechaDesdeDia(diaVencimiento, it) <= hoyInicio() }
+            .lastOrNull() ?: base
+        val siguientePendiente = ultimoVencido.plusMonths(1)
+
+        // Las compras en cuotas pueden requerir resúmenes futuros.
+        val ultimoMovimiento = movimientos.maxOfOrNull { periodoVencimientoResumen(it.fecha, diaCierre) }
+
+        val maxResumenExistente = existentes.keys.maxOrNull()?.let { YearMonth.parse(it) }
+        val ultimoPeriodo = maxOf(siguientePendiente, ultimoMovimiento ?: primerPeriodo, primerPeriodo, hoy, maxResumenExistente ?: hoy)
+
+        var periodo = primerPeriodo
+        while (!periodo.isAfter(ultimoPeriodo)) {
+            upsert(tarjeta.id, periodo, diaCierre, diaVencimiento, movimientos, existentes[periodoDe(periodo)])
+            inicializarPresupuestoSiNoExiste(periodo)
+            periodo = periodo.plusMonths(1)
         }
 
-        val primerPeriodo = movimientos.minOfOrNull { toYearMonth(it.fecha) }
-
-        if (primerPeriodo != null) {
-            var periodo: YearMonth = primerPeriodo
-            while (!periodo.isAfter(ultimoPeriodo)) {
-                upsert(tarjeta.id, periodo, diaCierre, diaVencimiento, movimientos, existentes[periodoDe(periodo)])
-                periodo = periodo.plusMonths(1)
-            }
-        }
-
-        val rangoCubierto = primerPeriodo != null
+        // Se conservan los resúmenes fuera del rango: solo se actualiza su total.
         existentes.forEach { (periodoStr, resumen) ->
             val p = YearMonth.parse(periodoStr)
-            val fueraDelRango = !rangoCubierto || p.isBefore(primerPeriodo) || p.isAfter(ultimoPeriodo)
-            if (fueraDelRango) {
+            if (p.isBefore(primerPeriodo) || p.isAfter(ultimoPeriodo)) {
                 val total = calcularTotal(movimientos, diaCierre, p)
                 if (resumen.total != total) {
                     db.resumenDao().update(resumen.copy(total = total))
@@ -89,8 +103,8 @@ class ResumenGenerator(private val db: AppDatabase) {
                 ResumenEntity(
                     tarjetaId = tarjetaId,
                     periodo = periodoDe(periodo),
-                    fechaCierre = fechaDesdeDia(diaCierre, periodo),
-                    fechaVencimiento = fechaDesdeDia(diaVencimiento, periodo.plusMonths(1)),
+                    fechaCierre = fechaDesdeDia(diaCierre, periodo.minusMonths(1)),
+                    fechaVencimiento = fechaDesdeDia(diaVencimiento, periodo),
                     total = total,
                     pagado = false
                 )
@@ -101,7 +115,7 @@ class ResumenGenerator(private val db: AppDatabase) {
     private fun calcularTotal(movimientos: List<MovimientoEntity>, diaCierre: Int, periodo: YearMonth): Double {
         var total = 0.0
         for (m in movimientos) {
-            if (periodo == periodoResumen(m.fecha, diaCierre)) {
+            if (periodo == periodoVencimientoResumen(m.fecha, diaCierre)) {
                 when (m.tipo) {
                     TipoMovimiento.GASTO -> total += m.monto
                     TipoMovimiento.INGRESO -> total -= m.monto
@@ -112,8 +126,24 @@ class ResumenGenerator(private val db: AppDatabase) {
         return total
     }
 
-    private fun toYearMonth(millis: Long): YearMonth =
-        YearMonth.from(Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate())
+    private fun hoyInicio(): Long =
+        LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-    private fun periodoDe(periodo: YearMonth): String = "%04d-%02d".format(periodo.year, periodo.monthValue)
+    private suspend fun inicializarPresupuestoSiNoExiste(periodo: YearMonth) {
+        val currentItems = db.presupuestoDao().getItemsByMonthSync(periodo.monthValue, periodo.year)
+        if (currentItems.isNotEmpty()) return
+
+        val lastMonth = db.presupuestoDao().getLastMonthWithData()
+        if (lastMonth != null) {
+            val itemsToCopy = db.presupuestoDao().getItemsByMonthSync(lastMonth.mes, lastMonth.anio)
+            itemsToCopy.forEach { item ->
+                db.presupuestoDao().insert(
+                    item.copy(id = 0, mes = periodo.monthValue, anio = periodo.year)
+                )
+            }
+        }
+    }
+
+    private fun toYearMonthUtc(millis: Long): YearMonth =
+        YearMonth.from(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
 }

@@ -13,7 +13,7 @@ interface TarjetaDao {
     suspend fun getAllSync(): List<TarjetaEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(tarjeta: TarjetaEntity)
+    suspend fun insert(tarjeta: TarjetaEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(tarjetas: List<TarjetaEntity>)

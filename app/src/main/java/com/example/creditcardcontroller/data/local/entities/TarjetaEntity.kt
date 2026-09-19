@@ -13,5 +13,6 @@ data class TarjetaEntity(
     val limiteCuotas: Double? = null,
     val diaCierreResumen: Int? = null,
     val diaVencimientoResumen: Int? = null,
-    val vencimientoTarjeta: Long = 0L
+    val vencimientoTarjeta: Long = 0L,
+    val primerVencimientoResumen: Long? = null
 )
