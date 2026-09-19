@@ -96,15 +96,15 @@ fun SummaryCard(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "GASTO EN CUOTAS",
+                            text = "GASTO EN UN PAGO",
                             style = MaterialTheme.typography.labelSmall,
                             color = Color.White.copy(alpha = 0.7f),
                             fontWeight = FontWeight.Bold
                         )
                         LimitProgressBar(
-                            progress = cuotasRatio,
-                            leftLabel = formatCurrency(gastoCuotas),
-                            bottomLabel = "TOTAL ${formatCurrency(limiteCuotas)}",
+                            progress = unPagoRatio,
+                            leftLabel = formatCurrency(gastoUnPago),
+                            bottomLabel = "TOTAL ${formatCurrency(limiteUnPago)}",
                             modifier = Modifier.fillMaxWidth(),
                             labelColor = Color.White,
                             trackColor = Color.White.copy(alpha = 0.2f),
@@ -116,15 +116,15 @@ fun SummaryCard(
                     
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "GASTO EN UN PAGO",
+                            text = "GASTO EN CUOTAS",
                             style = MaterialTheme.typography.labelSmall,
                             color = Color.White.copy(alpha = 0.7f),
                             fontWeight = FontWeight.Bold
                         )
                         LimitProgressBar(
-                            progress = unPagoRatio,
-                            leftLabel = formatCurrency(gastoUnPago),
-                            bottomLabel = "TOTAL ${formatCurrency(limiteUnPago)}",
+                            progress = cuotasRatio,
+                            leftLabel = formatCurrency(gastoCuotas),
+                            bottomLabel = "TOTAL ${formatCurrency(limiteCuotas)}",
                             modifier = Modifier.fillMaxWidth(),
                             labelColor = Color.White,
                             trackColor = Color.White.copy(alpha = 0.2f),
