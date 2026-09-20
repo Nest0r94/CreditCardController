@@ -39,12 +39,14 @@ fun MainScaffold() {
     var initialCardTipo by remember { mutableStateOf<TipoMedioPago?>(null) }
     var isPromoEditMode by remember { mutableStateOf(false) }
     var editingPromoId by remember { mutableStateOf<Long?>(null) }
+    var editingMovementId by remember { mutableStateOf<Long?>(null) }
 
     BackHandler(enabled = currentRoute != "presupuesto") {
         currentRoute = when (currentRoute) {
             "editar_tarjeta" -> "tarjetas"
             "editar_oferta" -> "promos"
             "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias", "ajustes_ayuda" -> "ajustes"
+            "nuevo" -> if (editingMovementId != null) "balances" else "presupuesto"
             else -> "presupuesto"
         }
     }
@@ -58,7 +60,7 @@ fun MainScaffold() {
                 "balances" -> "Balances"
                 "presupuesto" -> "Presupuesto"
                 "tarjetas" -> "Mis Tarjetas"
-                "nuevo" -> "Nuevo Movimiento"
+                "nuevo" -> if (editingMovementId != null) "Editar Movimiento" else "Nuevo Movimiento"
                 "estadisticas" -> "Datos"
                 "promos" -> "Promociones"
                 "ajustes" -> "Ajustes"
@@ -72,7 +74,13 @@ fun MainScaffold() {
                 "editar_tarjeta" -> { { currentRoute = "tarjetas" } }
                 "editar_oferta" -> { { currentRoute = "promos" } }
                 "ajustes_notificaciones", "ajustes_permisos", "ajustes_preferencias", "ajustes_ayuda" -> { { currentRoute = "ajustes" } }
-                "nuevo" -> { { currentRoute = "presupuesto" } }
+                "nuevo" -> { { 
+                    if (editingMovementId != null) {
+                        currentRoute = "balances"
+                    } else {
+                        currentRoute = "presupuesto"
+                    }
+                } }
                 else -> null
             }
 
@@ -93,13 +101,25 @@ fun MainScaffold() {
         },
         bottomBar = {
             if (!isSubScreen) {
-                BottomNavigationBar(currentRoute = currentRoute, onNavigate = { currentRoute = it })
+                BottomNavigationBar(
+                    currentRoute = currentRoute, 
+                    onNavigate = { 
+                        if (it == "nuevo") editingMovementId = null
+                        currentRoute = it 
+                    }
+                )
             }
         }
     ) { innerPadding ->
         val modifier = Modifier.padding(innerPadding)
         when (currentRoute) {
-            "balances" -> BalancesScreen(modifier = modifier)
+            "balances" -> BalancesScreen(
+                modifier = modifier,
+                onMovementClick = { id ->
+                    editingMovementId = id
+                    currentRoute = "nuevo"
+                }
+            )
             "presupuesto" -> BudgetScreen(modifier = modifier)
             "tarjetas" -> CardsScreen(
                 modifier = modifier,
@@ -123,7 +143,11 @@ fun MainScaffold() {
             )
             "nuevo" -> NewMovementScreen(
                 modifier = modifier,
-                onBack = { currentRoute = "presupuesto" }
+                movementId = editingMovementId,
+                onBack = { 
+                    val backRoute = if (editingMovementId != null) "balances" else "presupuesto"
+                    currentRoute = backRoute 
+                }
             )
             "estadisticas" -> StatsScreen(modifier = modifier)
             "promos" -> PromosScreen(

@@ -40,6 +40,7 @@ import com.example.creditcardcontroller.ui.theme.CreditCardControllerTheme
 @Composable
 fun BalancesScreen(
     modifier: Modifier = Modifier,
+    onMovementClick: (Long) -> Unit = {},
     viewModel: BalancesViewModel = viewModel(
         factory = BalancesViewModel.Factory(
             AppDatabase.getDatabase(LocalContext.current).tarjetaDao(),
@@ -162,7 +163,8 @@ fun BalancesScreen(
                         MovementItem(
                             movimiento = movimiento,
                             categoria = categoria,
-                            tarjetaNombre = tarjeta?.nombre ?: "Desconocida"
+                            tarjetaNombre = tarjeta?.nombre ?: "Desconocida",
+                            onClick = { onMovementClick(movimiento.id) }
                         )
                     }
                 }

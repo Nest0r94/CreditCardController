@@ -328,10 +328,11 @@ fun MovementsFilter(tarjetas: List<TarjetaEntity>, selectedId: Long?, onSelect: 
 }
 
 @Composable
-fun MovementItem(movimiento: MovimientoEntity, categoria: CategoriaEntity?, tarjetaNombre: String) {
+fun MovementItem(movimiento: MovimientoEntity, categoria: CategoriaEntity?, tarjetaNombre: String, onClick: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

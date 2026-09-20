@@ -49,6 +49,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun NewMovementScreen(
     modifier: Modifier = Modifier,
+    movementId: Long? = null,
     onBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -81,6 +82,7 @@ fun NewMovementScreen(
     var cantidadCuotas by remember { mutableStateOf(3) }
     var cuotaInicial by remember { mutableStateOf(1) }
 
+    var isLoaded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showTarjetaDropdown by remember { mutableStateOf(false) }
@@ -121,14 +123,38 @@ fun NewMovementScreen(
         initialMinute = selectedTime?.minute ?: LocalTime.now().minute
     )
 
+    LaunchedEffect(movementId, tarjetas, categorias, descuentos) {
+        if (movementId != null && !isLoaded && tarjetas.isNotEmpty() && categorias.isNotEmpty()) {
+            val mov = db.movimientoDao().getById(movementId)
+            if (mov != null) {
+                selectedTipo = mov.tipo
+                // Si es cuotas, el monto guardado es el de una cuota. Recuperamos el total original.
+                val totalAmount = if (mov.esCuotas) mov.monto * mov.cantidadCuotas else mov.monto
+                amount = String.format("%.2f", totalAmount).replace(",", ".")
+                
+                // Limpiar descripción del sufijo de cuotas
+                descripcion = mov.descripcion.replace(Regex(" \\(cuota \\d+/\\d+\\)$"), "")
+                
+                selectedCategoriaId = mov.categoriaId
+                selectedTarjeta = tarjetas.find { it.id == mov.tarjetaId }
+                selectedDate = Instant.ofEpochMilli(mov.fecha).atZone(ZoneId.systemDefault()).toLocalDate()
+                selectedTime = mov.hora?.let { LocalTime.ofNanoOfDay(it * 1_000_000) }
+                selectedDescuento = descuentos.find { it.id == mov.descuentoId }
+                esCuotas = mov.esCuotas
+                cantidadCuotas = mov.cantidadCuotas
+                isLoaded = true
+            }
+        }
+    }
+
     LaunchedEffect(tarjetas) {
-        if (selectedTarjeta == null && tarjetas.isNotEmpty()) {
+        if (selectedTarjeta == null && tarjetas.isNotEmpty() && movementId == null) {
             selectedTarjeta = tarjetas.first()
         }
     }
 
     LaunchedEffect(categorias) {
-        if (selectedCategoriaId == null && categorias.isNotEmpty()) {
+        if (selectedCategoriaId == null && categorias.isNotEmpty() && movementId == null) {
             selectedCategoriaId = categorias.firstOrNull { it.nombre == "Otros" }?.id ?: categorias.first().id
         }
     }
@@ -658,13 +684,24 @@ fun NewMovementScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             PrimaryButton(
-                text = if (selectedTipo == TipoMovimiento.GASTO) "Guardar Gasto" else "Guardar Ingreso",
+                text = if (movementId != null) "Actualizar" else (if (selectedTipo == TipoMovimiento.GASTO) "Guardar Gasto" else "Guardar Ingreso"),
                 onClick = {
                     val catId = selectedCategoriaId ?: categorias.firstOrNull()?.id
                     val tarjetaId = selectedTarjeta?.id
                     
                     if (catId != null && tarjetaId != null && amount.toDoubleOrNull() != null) {
                         scope.launch {
+                            if (movementId != null) {
+                                val original = db.movimientoDao().getById(movementId)
+                                if (original != null) {
+                                    if (original.cuotaGroupId != null) {
+                                        db.movimientoDao().deleteByGroupId(original.cuotaGroupId)
+                                    } else {
+                                        db.movimientoDao().delete(original)
+                                    }
+                                }
+                            }
+
                             val montoTotal = amount.toDoubleOrNull() ?: 0.0
                             val moverACuotas = esCuotas && cantidadCuotas > 1 && selectedTipo == TipoMovimiento.GASTO
                             val movimiento = MovimientoEntity(
