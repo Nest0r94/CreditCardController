@@ -1,15 +1,11 @@
 package com.example.creditcardcontroller.ui.screens.balances.comp
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,8 +15,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -199,107 +193,6 @@ fun CardItem(tarjeta: TarjetaEntity, consumoDelMes: Double) {
                 }
             }
         }
-    }
-}
-
-@Composable
-fun CategoryExpensesSection(movimientos: List<MovimientoEntity>, categorias: List<CategoriaEntity>) {
-    val categoryTotals = movimientos.groupBy { it.categoriaId }
-        .mapValues { 
-            it.value.sumOf { m -> 
-                when (m.tipo) {
-                    TipoMovimiento.GASTO -> m.monto
-                    TipoMovimiento.INGRESO -> -m.monto
-                    TipoMovimiento.REINTEGRO -> 0.0
-                }
-            } 
-        }
-    
-    val totalAmount = categoryTotals.values.sum()
-    
-    val categoryPercentages = if (totalAmount > 0) {
-        categoryTotals.mapValues { (it.value / totalAmount) * 100 }
-    } else {
-        emptyMap()
-    }
-
-    val sortedCategories = categorias.filter { categoryTotals.containsKey(it.id) }
-        .sortedByDescending { categoryTotals[it.id] }
-
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-    ) {
-        Column(modifier = Modifier.padding(24.dp)) {
-            Text(
-                "Gastos por Categoría",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(120.dp)) {
-                    DonutChart(categoryPercentages, categorias)
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("TOTAL", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("100%", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    }
-                }
-                
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    sortedCategories.take(3).forEach { cat ->
-                        val percentage = categoryPercentages[cat.id] ?: 0.0
-                        CategoryLegendItem(cat.nombre, "${percentage.toInt()}%", colorDeCategoria(cat.color))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun DonutChart(percentages: Map<Long, Double>, categorias: List<CategoriaEntity>) {
-    Canvas(modifier = Modifier.size(120.dp)) {
-        var startAngle = -90f
-        percentages.forEach { (catId, percentage) ->
-            val sweepAngle = (percentage.toFloat() / 100f) * 360f
-            val cat = categorias.find { it.id == catId }
-            val color = colorDeCategoria(cat?.color ?: "#757575")
-            
-            drawArc(
-                color = color,
-                startAngle = startAngle,
-                sweepAngle = sweepAngle,
-                useCenter = false,
-                style = Stroke(width = 25f, cap = StrokeCap.Round)
-            )
-            startAngle += sweepAngle
-        }
-        
-        if (percentages.isEmpty()) {
-            drawArc(
-                color = Color.LightGray.copy(alpha = 0.3f),
-                startAngle = 0f,
-                sweepAngle = 360f,
-                useCenter = false,
-                style = Stroke(width = 25f, cap = StrokeCap.Round)
-            )
-        }
-    }
-}
-
-@Composable
-fun CategoryLegendItem(name: String, percentage: String, color: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(color))
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(name, modifier = Modifier.width(80.dp), style = MaterialTheme.typography.bodyMedium)
-        Text(percentage, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

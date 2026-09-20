@@ -15,7 +15,10 @@ import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.PresupuestoEntity
 import com.example.creditcardcontroller.data.local.entities.ResumenEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
+import com.example.creditcardcontroller.ui.screens.balances.comp.ChartItem
 import com.example.creditcardcontroller.ui.util.periodoVencimientoResumen
+import com.example.creditcardcontroller.ui.composables.categories.colorDeCategoria
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -42,7 +45,9 @@ data class BalancesUiState(
     val gastoCuotas: Double = 0.0,
     val gastoUnPago: Double = 0.0,
     val limiteCuotas: Double = 0.0,
-    val limiteUnPago: Double = 0.0
+    val limiteUnPago: Double = 0.0,
+    val categoryExpenses: List<ChartItem> = emptyList(),
+    val paymentMethodExpenses: List<ChartItem> = emptyList()
 )
 
 private data class BalancesData(
@@ -146,6 +151,38 @@ class BalancesViewModel(
             .filter { it.periodo == selectedDate.toString() }
             .associate { it.tarjetaId to it.total }
 
+        val expensesOnly = movimientosMes.filter { it.tipo == TipoMovimiento.GASTO }
+
+        val categoryTotals = expensesOnly.groupBy { it.categoriaId }
+            .mapValues { it.value.sumOf { m -> m.monto } }
+        val totalCategoryAmount = categoryTotals.values.sum()
+        val categoryChartItems = categorias.filter { categoryTotals.containsKey(it.id) && (categoryTotals[it.id] ?: 0.0) > 0 }
+            .map { cat ->
+                val amount = categoryTotals[cat.id] ?: 0.0
+                ChartItem(
+                    id = cat.id,
+                    label = cat.nombre,
+                    amount = amount,
+                    percentage = if (totalCategoryAmount > 0) (amount / totalCategoryAmount) * 100 else 0.0,
+                    color = colorDeCategoria(cat.color)
+                )
+            }.sortedByDescending { it.amount }
+
+        val cardTotals = expensesOnly.groupBy { it.tarjetaId }
+            .mapValues { it.value.sumOf { m -> m.monto } }
+        val totalCardAmount = cardTotals.values.sum()
+        val cardChartItems = allTarjetas.filter { cardTotals.containsKey(it.id) && (cardTotals[it.id] ?: 0.0) > 0 }
+            .map { tarjeta ->
+                val amount = cardTotals[tarjeta.id] ?: 0.0
+                ChartItem(
+                    id = tarjeta.id,
+                    label = tarjeta.nombre,
+                    amount = amount,
+                    percentage = if (totalCardAmount > 0) (amount / totalCardAmount) * 100 else 0.0,
+                    color = getCardColor(tarjeta.id)
+                )
+            }.sortedByDescending { it.amount }
+
         BalancesUiState(
             tarjetas = tarjetasCredito,
             consumoPorTarjeta = consumoPorTarjeta,
@@ -162,7 +199,9 @@ class BalancesViewModel(
             gastoCuotas = gastoCuotas,
             gastoUnPago = gastoUnPago,
             limiteCuotas = limiteCuotas,
-            limiteUnPago = limiteUnPago
+            limiteUnPago = limiteUnPago,
+            categoryExpenses = categoryChartItems,
+            paymentMethodExpenses = cardChartItems
         )
     }.stateIn(
         scope = viewModelScope,
@@ -201,6 +240,18 @@ class BalancesViewModel(
             } ?: date
         }
         _selectedDate.value = target
+    }
+
+    private fun getCardColor(id: Long): Color {
+        val colors = listOf(
+            Color(0xFF6200EE),
+            Color(0xFF03DAC6),
+            Color(0xFF3700B3),
+            Color(0xFF018786),
+            Color(0xFFFF0266),
+            Color(0xFFBB86FC)
+        )
+        return colors[(id % colors.size).toInt()]
     }
 
     class Factory(

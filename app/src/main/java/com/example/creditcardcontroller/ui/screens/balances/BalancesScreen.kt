@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -126,10 +127,33 @@ fun BalancesScreen(
             }
 
             item {
-                CategoryExpensesSection(
-                    movimientos = state.movimientos,
-                    categorias = state.categorias
-                )
+                Column {
+                    Text(
+                        "Análisis de Gastos",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(horizontal = 0.dp)
+                    ) {
+                        item {
+                            ExpensesChartCard(
+                                title = "Gastos por medio de pago",
+                                items = state.paymentMethodExpenses,
+                                modifier = Modifier.width(300.dp)
+                            )
+                        }
+                        item {
+                            ExpensesChartCard(
+                                title = "Gastos por categoría",
+                                items = state.categoryExpenses,
+                                modifier = Modifier.width(300.dp)
+                            )
+                        }
+                    }
+                }
             }
 
             item {
