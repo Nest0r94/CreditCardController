@@ -28,6 +28,7 @@ import kotlin.math.abs
 
 data class BalancesUiState(
     val tarjetas: List<TarjetaEntity> = emptyList(),
+    val consumoPorTarjeta: Map<Long, Double> = emptyMap(),
     val tarjetasFiltro: List<TarjetaEntity> = emptyList(),
     val movimientos: List<MovimientoEntity> = emptyList(),
     val categorias: List<CategoriaEntity> = emptyList(),
@@ -141,8 +142,13 @@ class BalancesViewModel(
             movimientosMes.filter { it.tarjetaId == selectedId }
         }
 
+        val consumoPorTarjeta = data.resumenes
+            .filter { it.periodo == selectedDate.toString() }
+            .associate { it.tarjetaId to it.total }
+
         BalancesUiState(
             tarjetas = tarjetasCredito,
+            consumoPorTarjeta = consumoPorTarjeta,
             tarjetasFiltro = allTarjetas,
             movimientos = filteredMovimientos,
             categorias = categorias,

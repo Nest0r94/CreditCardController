@@ -156,7 +156,7 @@ fun SummaryCard(
 }
 
 @Composable
-fun CardItem(tarjeta: TarjetaEntity) {
+fun CardItem(tarjeta: TarjetaEntity, consumoDelMes: Double) {
     Surface(
         modifier = Modifier
             .width(280.dp)
@@ -172,12 +172,12 @@ fun CardItem(tarjeta: TarjetaEntity) {
                 color = Color(0xFF37474F)
             )
             Text(
-                text = "BALANCE DISPONIBLE",
+                text = "CONSUMO DEL MES",
                 style = MaterialTheme.typography.labelSmall,
                 color = Color(0xFF78909C)
             )
             Text(
-                text = tarjeta.limiteMensual?.let { formatCurrency(it) } ?: "-", // Simplified
+                text = formatCurrency(consumoDelMes),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF37474F)

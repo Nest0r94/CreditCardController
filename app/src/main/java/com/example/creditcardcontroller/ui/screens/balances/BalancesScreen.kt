@@ -116,7 +116,10 @@ fun BalancesScreen(
                         contentPadding = PaddingValues(horizontal = 0.dp)
                     ) {
                         items(state.tarjetas) { tarjeta ->
-                            CardItem(tarjeta = tarjeta)
+                            CardItem(
+                                tarjeta = tarjeta,
+                                consumoDelMes = state.consumoPorTarjeta[tarjeta.id] ?: 0.0
+                            )
                         }
                     }
                 }
