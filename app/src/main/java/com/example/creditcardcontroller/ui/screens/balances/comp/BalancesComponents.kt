@@ -32,6 +32,7 @@ import com.example.creditcardcontroller.ui.composables.categories.colorDeCategor
 import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategoria
 import com.example.creditcardcontroller.ui.composables.feedback.LimitProgressBar
 import com.example.creditcardcontroller.ui.util.proximaFechaDeDia
+import com.example.creditcardcontroller.ui.util.proximaFechaDeVencimiento
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.LocalTime
@@ -192,7 +193,9 @@ fun CardItem(tarjeta: TarjetaEntity) {
                 Spacer(modifier = Modifier.width(24.dp))
                 Column {
                     Text("VENCE", style = MaterialTheme.typography.labelSmall, color = Color(0xFF78909C))
-                    Text(tarjeta.diaVencimientoResumen?.let { formatDateShort(proximaFechaDeDia(it)) } ?: "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF37474F))
+                    Text(tarjeta.diaVencimientoResumen?.let {
+                        formatDateShort(proximaFechaDeVencimiento(tarjeta.primerVencimientoResumen, it))
+                    } ?: "-", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = Color(0xFF37474F))
                 }
             }
         }

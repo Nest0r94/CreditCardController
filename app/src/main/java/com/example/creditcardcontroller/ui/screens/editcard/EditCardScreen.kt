@@ -1,5 +1,6 @@
 package com.example.creditcardcontroller.ui.screens.editcard
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -70,7 +71,8 @@ fun EditCardScreen(
                 monthlyLimit = tarjeta.limiteMensual?.let { formatAmount(it) } ?: ""
                 installmentsLimit = tarjeta.limiteCuotas?.let { formatAmount(it) } ?: ""
                 closingDate = tarjeta.diaCierreResumen?.takeIf { it in 1..31 }?.let { proximaFechaDeDiaUtc(it) }
-                dueDate = tarjeta.diaVencimientoResumen?.takeIf { it in 1..31 }?.let { proximaFechaDeDiaUtc(it) }
+                dueDate = tarjeta.primerVencimientoResumen
+                    ?: tarjeta.diaVencimientoResumen?.takeIf { it in 1..31 }?.let { proximaFechaDeDiaUtc(it) }
                 cardExpiration = tarjeta.vencimientoTarjeta
             }
         }
@@ -83,9 +85,22 @@ fun EditCardScreen(
         val esCredito = cardTipo == TipoMedioPago.CREDITO
         val limiteMensual = if (esCredito) parseAmount(monthlyLimit) else null
         val limiteCuotas = if (esCredito) parseAmount(installmentsLimit) else null
-        val diaCierre = if (esCredito) closingDate?.let { diaDeFecha(it) } else null
-        val diaVencimiento = if (esCredito) dueDate?.let { diaDeFecha(it) } else null
+        val fechaCierreSeleccionada = closingDate
+        val fechaVencimientoSeleccionada = dueDate
+        val diaCierre = if (esCredito) fechaCierreSeleccionada?.let { diaDeFecha(it) } else null
+        val diaVencimiento = if (esCredito) fechaVencimientoSeleccionada?.let { diaDeFecha(it) } else null
         val vencimientoTarjeta = cardExpiration ?: 0L
+
+        if (esCredito && fechaCierreSeleccionada != null && fechaVencimientoSeleccionada != null &&
+            fechaVencimientoSeleccionada <= fechaCierreSeleccionada
+        ) {
+            Toast.makeText(
+                context,
+                "La fecha de vencimiento debe ser posterior a la fecha de cierre",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
 
         scope.launch {
             if (tarjetaId == null) {

@@ -35,6 +35,7 @@ import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.composables.dialogs.UpdateDialog
 import com.example.creditcardcontroller.ui.screens.cards.comp.CardView
 import com.example.creditcardcontroller.ui.util.proximaFechaDeDia
+import com.example.creditcardcontroller.ui.util.proximaFechaDeVencimiento
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.time.Instant
@@ -102,7 +103,9 @@ fun CardsScreen(
                         amount = "$0,00",
                         limit = tarjeta.limiteMensual?.let { formatCurrency(it) } ?: "-",
                         closingDate = tarjeta.diaCierreResumen?.takeIf { it in 1..31 }?.let { formatClosingDate(proximaFechaDeDia(it)) } ?: "-",
-                        dueDate = tarjeta.diaVencimientoResumen?.takeIf { it in 1..31 }?.let { formatDueDate(proximaFechaDeDia(it)) } ?: "-",
+                        dueDate = tarjeta.diaVencimientoResumen?.takeIf { it in 1..31 }?.let {
+                            formatDueDate(proximaFechaDeVencimiento(tarjeta.primerVencimientoResumen, it))
+                        } ?: "-",
                         cardExpiration = if (tarjeta.vencimientoTarjeta > 0L) formatExpiration(tarjeta.vencimientoTarjeta) else "--",
                         usagePercentage = 0f,
                         isExpired = isExpired,

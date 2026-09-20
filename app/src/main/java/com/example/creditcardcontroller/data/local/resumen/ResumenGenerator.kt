@@ -95,8 +95,13 @@ class ResumenGenerator(private val db: AppDatabase) {
     ) {
         val total = calcularTotal(movimientos, diaCierre, periodo)
         if (existente != null) {
-            if (existente.total != total) {
-                db.resumenDao().update(existente.copy(total = total))
+            val resumenActualizado = existente.copy(
+                fechaCierre = fechaDesdeDia(diaCierre, periodo.minusMonths(1)),
+                fechaVencimiento = fechaDesdeDia(diaVencimiento, periodo),
+                total = total
+            )
+            if (existente != resumenActualizado) {
+                db.resumenDao().update(resumenActualizado)
             }
         } else {
             db.resumenDao().insert(

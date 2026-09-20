@@ -17,6 +17,24 @@ fun proximaFechaDeDia(dia: Int, hoy: LocalDate = LocalDate.now()): Long =
 fun proximaFechaDeDiaUtc(dia: Int, hoy: LocalDate = LocalDate.now()): Long =
     proximaFechaDeDia(dia, hoy, ZoneOffset.UTC)
 
+/**
+ * Conserva el mes configurado para el primer vencimiento mientras aún no haya
+ * pasado; luego muestra la próxima ocurrencia del día de vencimiento.
+ */
+fun proximaFechaDeVencimiento(
+    primerVencimiento: Long?,
+    diaVencimiento: Int,
+    hoy: LocalDate = LocalDate.now()
+): Long {
+    val fechaInicial = primerVencimiento
+        ?.let { Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate() }
+    return if (fechaInicial != null && !fechaInicial.isBefore(hoy)) {
+        fechaInicial.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    } else {
+        proximaFechaDeDia(diaVencimiento, hoy)
+    }
+}
+
 fun diaDeFecha(millis: Long): Int =
     Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).dayOfMonth
 
