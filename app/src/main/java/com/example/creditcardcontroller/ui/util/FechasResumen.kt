@@ -45,6 +45,18 @@ fun periodoResumen(fechaMillis: Long, diaCierre: Int?): YearMonth {
 fun periodoVencimientoResumen(fechaMillis: Long, diaCierre: Int?): YearMonth =
     periodoResumen(fechaMillis, diaCierre)
 
+/** Primera fecha que pertenece al rango de compras del resumen indicado. */
+fun primeraFechaDelResumen(periodo: YearMonth, diaCierre: Int): Long {
+    val cierreAnterior = fechaDesdeDia(diaCierre, periodo.minusMonths(1))
+    return Instant.ofEpochMilli(cierreAnterior)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+        .plusDays(1)
+        .atStartOfDay(ZoneId.systemDefault())
+        .toInstant()
+        .toEpochMilli()
+}
+
 fun periodoDe(anio: Int, mes: Int): String = "%04d-%02d".format(anio, mes)
 
 fun periodoDe(mes: YearMonth): String = "%04d-%02d".format(mes.year, mes.monthValue)

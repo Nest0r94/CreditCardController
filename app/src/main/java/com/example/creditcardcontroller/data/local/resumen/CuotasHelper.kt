@@ -17,16 +17,16 @@ fun expandirEnCuotas(movimiento: MovimientoEntity, diaCierre: Int?, cuotaInicial
 
     val cuotaGroupId = UUID.randomUUID().toString()
     val montoBase = redondear(total / n)
-    val diaOriginal = Instant.ofEpochMilli(movimiento.fecha)
+    val diaOriginal = Instant.ofEpochMilli(movimiento.fechaPresentacion)
         .atZone(ZoneId.systemDefault())
         .toLocalDate()
         .dayOfMonth
-    val base = periodoResumen(movimiento.fecha, diaCierre)
+    val base = periodoResumen(movimiento.fechaPresentacion, diaCierre)
     val dia = if (diaCierre != null && diaCierre in 1..31) minOf(diaOriginal, diaCierre) else diaOriginal
 
     return (cuotaInicial..n).map { k ->
-        val fecha = if (k == cuotaInicial) {
-            movimiento.fecha
+        val fechaPresentacion = if (k == cuotaInicial) {
+            movimiento.fechaPresentacion
         } else {
             // Calculamos el mes objetivo de la cuota basándonos en el período de la primera cuota registrada
             val mesObjetivo = base.plusMonths((k - cuotaInicial).toLong())
@@ -40,7 +40,9 @@ fun expandirEnCuotas(movimiento: MovimientoEntity, diaCierre: Int?, cuotaInicial
             monto = if (k == n) redondear(total - montoBase * (n - 1)) else montoBase,
             cantidadCuotas = n,
             numeroCuota = k,
-            fecha = fecha,
+            // Todas las cuotas muestran la fecha de compra original. Su período se
+            // determina con fechaPresentacion, que sí avanza en cada cuota.
+            fechaPresentacion = fechaPresentacion,
             hora = if (k == cuotaInicial) movimiento.hora else null,
             montoReintegrable = if (k == cuotaInicial) movimiento.montoReintegrable else 0.0,
             cuotaGroupId = cuotaGroupId

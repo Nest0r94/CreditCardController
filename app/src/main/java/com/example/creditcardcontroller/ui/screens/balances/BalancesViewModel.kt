@@ -98,9 +98,9 @@ class BalancesViewModel(
         fun mesEfectivo(m: MovimientoEntity): YearMonth {
             val tarjeta = tarjetasById[m.tarjetaId]
             return if (tarjeta?.tipo == TipoMedioPago.CREDITO && tarjeta.diaCierreResumen != null) {
-                periodoVencimientoResumen(m.fecha, tarjeta.diaCierreResumen)
+                periodoVencimientoResumen(m.fechaPresentacion, tarjeta.diaCierreResumen)
             } else {
-                YearMonth.from(Instant.ofEpochMilli(m.fecha).atZone(ZoneId.systemDefault()).toLocalDate())
+                YearMonth.from(Instant.ofEpochMilli(m.fechaPresentacion).atZone(ZoneId.systemDefault()).toLocalDate())
             }
         }
 

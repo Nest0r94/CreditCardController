@@ -1,6 +1,7 @@
 package com.example.creditcardcontroller.data.local.entities
 
 import androidx.room.Entity
+import androidx.room.ColumnInfo
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -41,7 +42,10 @@ data class MovimientoEntity(
     val esCuotas: Boolean,
     val cantidadCuotas: Int,
     val numeroCuota: Int = 0,
+    /** Fecha de compra, siempre mostrada al usuario. */
     val fecha: Long,
+    /** Fecha usada para asignar el movimiento a un resumen o balance. */
+    @ColumnInfo(defaultValue = "0") val fechaPresentacion: Long = fecha,
     val categoriaId: Long,
     val tarjetaId: Long,
     val descuentoId: Long?,

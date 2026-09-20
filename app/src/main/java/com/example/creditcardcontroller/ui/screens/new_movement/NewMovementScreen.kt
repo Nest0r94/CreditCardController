@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.creditcardcontroller.data.local.AppDatabase
 import com.example.creditcardcontroller.data.local.SettingsDataStore
+import com.example.creditcardcontroller.data.local.TipoMedioPago
 import com.example.creditcardcontroller.data.local.TipoMovimiento
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
@@ -37,13 +38,17 @@ import com.example.creditcardcontroller.data.local.resumen.expandirEnCuotas
 import com.example.creditcardcontroller.ui.composables.actions.PrimaryButton
 import com.example.creditcardcontroller.ui.composables.categories.colorDeCategoria
 import com.example.creditcardcontroller.ui.composables.categories.iconoDeCategoria
+import com.example.creditcardcontroller.ui.util.periodoVencimientoResumen
+import com.example.creditcardcontroller.ui.util.primeraFechaDelResumen
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,6 +74,7 @@ fun NewMovementScreen(
     var selectedCategoriaId by remember { mutableStateOf<Long?>(null) }
     var selectedTarjeta by remember { mutableStateOf<TarjetaEntity?>(null) }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var selectedPeriodoResumen by remember { mutableStateOf<YearMonth?>(null) }
     var selectedTime by remember { mutableStateOf<LocalTime?>(null) }
     var selectedDescuento by remember { mutableStateOf<DescuentoEntity?>(null) }
 
@@ -84,6 +90,7 @@ fun NewMovementScreen(
 
     var isLoaded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var showResumenDropdown by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showTarjetaDropdown by remember { mutableStateOf(false) }
     var showDescuentoDropdown by remember { mutableStateOf(false) }
@@ -123,6 +130,22 @@ fun NewMovementScreen(
         initialMinute = selectedTime?.minute ?: LocalTime.now().minute
     )
 
+    val fechaCompraMillis = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val diaCierreResumen = selectedTarjeta
+        ?.takeIf { it.tipo == TipoMedioPago.CREDITO }
+        ?.diaCierreResumen
+        ?.takeIf { it in 1..31 }
+    val periodoResumenCompra = diaCierreResumen?.let {
+        periodoVencimientoResumen(fechaCompraMillis, it)
+    }
+    val opcionesResumen = periodoResumenCompra?.let { periodoCompra ->
+        listOf(periodoCompra.minusMonths(1), periodoCompra, periodoCompra.plusMonths(1))
+    }.orEmpty()
+    val periodoResumenElegido = selectedPeriodoResumen
+        ?.takeIf { it in opcionesResumen }
+        ?: periodoResumenCompra
+    val formatoResumen = remember { DateTimeFormatter.ofPattern("MMMM yyyy", Locale("es", "AR")) }
+
     LaunchedEffect(movementId, tarjetas, categorias, descuentos) {
         if (movementId != null && !isLoaded && tarjetas.isNotEmpty() && categorias.isNotEmpty()) {
             val mov = db.movimientoDao().getById(movementId)
@@ -138,6 +161,13 @@ fun NewMovementScreen(
                 selectedCategoriaId = mov.categoriaId
                 selectedTarjeta = tarjetas.find { it.id == mov.tarjetaId }
                 selectedDate = Instant.ofEpochMilli(mov.fecha).atZone(ZoneId.systemDefault()).toLocalDate()
+                tarjetas.find { it.id == mov.tarjetaId }
+                    ?.takeIf { it.tipo == TipoMedioPago.CREDITO }
+                    ?.diaCierreResumen
+                    ?.takeIf { it in 1..31 }
+                    ?.let { diaCierre ->
+                        selectedPeriodoResumen = periodoVencimientoResumen(mov.fechaPresentacion, diaCierre)
+                    }
                 selectedTime = mov.hora?.let { LocalTime.ofNanoOfDay(it * 1_000_000) }
                 selectedDescuento = descuentos.find { it.id == mov.descuentoId }
                 esCuotas = mov.esCuotas
@@ -166,6 +196,7 @@ fun NewMovementScreen(
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let {
                         selectedDate = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
+                        selectedPeriodoResumen = null
                     }
                     showDatePicker = false
                 }) {
@@ -390,6 +421,7 @@ fun NewMovementScreen(
                                     text = { Text(tarjeta.nombre, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                                     onClick = {
                                         selectedTarjeta = tarjeta
+                                        selectedPeriodoResumen = null
                                         showTarjetaDropdown = false
                                         if (selectedDescuento != null && !selectedDescuento!!.tarjetasAplicables.contains(tarjeta.id)) {
                                             selectedDescuento = null
@@ -438,6 +470,48 @@ fun NewMovementScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            if (movementId != null && periodoResumenCompra != null && periodoResumenElegido != null) {
+                Text(
+                    text = "RESUMEN",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    CustomDropdownSelector(
+                        text = periodoResumenElegido.format(formatoResumen).uppercase(Locale("es", "AR")),
+                        icon = Icons.Default.CalendarToday,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        showResumenDropdown = true
+                    }
+                    DropdownMenu(
+                        expanded = showResumenDropdown,
+                        onDismissRequest = { showResumenDropdown = false },
+                        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        opcionesResumen.forEach { periodo ->
+                            DropdownMenuItem(
+                                text = { Text(periodo.format(formatoResumen).uppercase(Locale("es", "AR"))) },
+                                onClick = {
+                                    selectedPeriodoResumen = periodo
+                                    showResumenDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Text(
+                    text = "Si ves que el movimiento no corresponde con el resumen real de la tarjeta, puedes modificarlo.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
             Text(
                 text = "APLICAR DESCUENTO", 
@@ -691,7 +765,7 @@ fun NewMovementScreen(
                     
                     if (catId != null && tarjetaId != null && amount.toDoubleOrNull() != null) {
                         scope.launch {
-                            if (movementId != null) {
+                            val tarjetaOriginalId = if (movementId != null) {
                                 val original = db.movimientoDao().getById(movementId)
                                 if (original != null) {
                                     if (original.cuotaGroupId != null) {
@@ -700,17 +774,34 @@ fun NewMovementScreen(
                                         db.movimientoDao().delete(original)
                                     }
                                 }
+                                original?.tarjetaId
+                            } else {
+                                null
                             }
 
                             val montoTotal = amount.toDoubleOrNull() ?: 0.0
                             val moverACuotas = esCuotas && cantidadCuotas > 1 && selectedTipo == TipoMovimiento.GASTO
+                            val fechaPresentacion = if (movementId != null &&
+                                periodoResumenCompra != null &&
+                                periodoResumenElegido != null &&
+                                diaCierreResumen != null
+                            ) {
+                                if (periodoResumenElegido == periodoResumenCompra) {
+                                    fechaCompraMillis
+                                } else {
+                                    primeraFechaDelResumen(periodoResumenElegido, diaCierreResumen)
+                                }
+                            } else {
+                                fechaCompraMillis
+                            }
                             val movimiento = MovimientoEntity(
                                 descripcion = descripcion,
                                 monto = montoTotal,
                                 esCuotas = moverACuotas,
                                 cantidadCuotas = if (moverACuotas) cantidadCuotas else 1,
                                 numeroCuota = 0,
-                                fecha = selectedDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(),
+                                fecha = fechaCompraMillis,
+                                fechaPresentacion = fechaPresentacion,
                                 categoriaId = catId,
                                 tarjetaId = tarjetaId,
                                 descuentoId = selectedDescuento?.id,
@@ -725,6 +816,9 @@ fun NewMovementScreen(
                                 listOf(movimiento)
                             }
                             db.movimientoDao().insertAll(movimientos)
+                            if (tarjetaOriginalId != null && tarjetaOriginalId != tarjetaId) {
+                                com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).recalcular(tarjetaOriginalId)
+                            }
                             com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).recalcular(tarjetaId)
                             onBack()
                         }

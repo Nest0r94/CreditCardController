@@ -53,7 +53,14 @@ class BackupManager(private val db: AppDatabase) {
                     val movimientosProcesados = data.movimientos.map { mov ->
                         // Si por algún motivo el tipo viene nulo desde GSON por ser backup viejo
                         @Suppress("SENSELESS_COMPARISON")
-                        if (mov.tipo == null) mov.copy(tipo = com.example.creditcardcontroller.data.local.TipoMovimiento.GASTO) else mov
+                        val conTipo = if (mov.tipo == null) {
+                            mov.copy(tipo = com.example.creditcardcontroller.data.local.TipoMovimiento.GASTO)
+                        } else {
+                            mov
+                        }
+                        // Los backups anteriores no tienen fechaPresentacion: Gson la
+                        // deserializa como 0, por lo que se conserva su fecha de compra.
+                        if (conTipo.fechaPresentacion == 0L) conTipo.copy(fechaPresentacion = conTipo.fecha) else conTipo
                     }
                     db.movimientoDao().insertAll(movimientosProcesados)
                 }

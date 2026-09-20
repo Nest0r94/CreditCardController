@@ -48,7 +48,7 @@ class ResumenGenerator(private val db: AppDatabase) {
         // elegida al crear la tarjeta, o el primer movimiento, o el mes actual.
         val inicioPeriodo = existentes.keys.minOrNull()?.let { YearMonth.parse(it) }
             ?: tarjeta.primerVencimientoResumen?.let { toYearMonthUtc(it) }
-            ?: movimientos.minOfOrNull { periodoVencimientoResumen(it.fecha, diaCierre) }
+            ?: movimientos.minOfOrNull { periodoVencimientoResumen(it.fechaPresentacion, diaCierre) }
             ?: hoy
 
         val primerPeriodo = minOf(inicioPeriodo, hoy)
@@ -61,7 +61,7 @@ class ResumenGenerator(private val db: AppDatabase) {
         val siguientePendiente = ultimoVencido.plusMonths(1)
 
         // Las compras en cuotas pueden requerir resúmenes futuros.
-        val ultimoMovimiento = movimientos.maxOfOrNull { periodoVencimientoResumen(it.fecha, diaCierre) }
+        val ultimoMovimiento = movimientos.maxOfOrNull { periodoVencimientoResumen(it.fechaPresentacion, diaCierre) }
 
         val maxResumenExistente = existentes.keys.maxOrNull()?.let { YearMonth.parse(it) }
         val ultimoPeriodo = maxOf(siguientePendiente, ultimoMovimiento ?: primerPeriodo, primerPeriodo, hoy, maxResumenExistente ?: hoy)
@@ -115,7 +115,7 @@ class ResumenGenerator(private val db: AppDatabase) {
     private fun calcularTotal(movimientos: List<MovimientoEntity>, diaCierre: Int, periodo: YearMonth): Double {
         var total = 0.0
         for (m in movimientos) {
-            if (periodo == periodoVencimientoResumen(m.fecha, diaCierre)) {
+            if (periodo == periodoVencimientoResumen(m.fechaPresentacion, diaCierre)) {
                 when (m.tipo) {
                     TipoMovimiento.GASTO -> total += m.monto
                     TipoMovimiento.INGRESO -> total -= m.monto
