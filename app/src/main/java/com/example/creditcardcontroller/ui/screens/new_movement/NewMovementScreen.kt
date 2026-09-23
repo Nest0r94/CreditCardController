@@ -32,6 +32,7 @@ import com.example.creditcardcontroller.data.local.TipoMedioPago
 import com.example.creditcardcontroller.data.local.TipoMovimiento
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
+import com.example.creditcardcontroller.data.local.entities.PresupuestoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 import com.example.creditcardcontroller.data.local.periodoDeFrecuencia
 import com.example.creditcardcontroller.data.local.resumen.expandirEnCuotas
@@ -61,10 +62,15 @@ fun NewMovementScreen(
     val scope = rememberCoroutineScope()
     val db = remember { AppDatabase.getDatabase(context) }
     val settingsDataStore = remember { SettingsDataStore(context) }
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     
     val tarjetas by db.tarjetaDao().getAllTarjetas().collectAsState(initial = emptyList())
     val descuentos by db.descuentoDao().getAllDescuentos().collectAsState(initial = emptyList())
     val categorias by db.categoriaDao().getAllCategorias().collectAsState(initial = emptyList())
+    val allPresupuestos by db.presupuestoDao().getAllItems().collectAsState(initial = emptyList())
+    val presupuestos by db.presupuestoDao()
+        .getItemsByMonth(selectedDate.monthValue, selectedDate.year)
+        .collectAsState(initial = emptyList())
     val movimientos by db.movimientoDao().getAllMovements().collectAsState(initial = emptyList())
     val editTimeEnabled by settingsDataStore.editTimeEnabledFlow.collectAsState(initial = false)
     val initialInstallmentEnabled by settingsDataStore.initialInstallmentEnabledFlow.collectAsState(initial = false)
@@ -73,15 +79,18 @@ fun NewMovementScreen(
     var amount by remember { mutableStateOf("") }
     var selectedCategoriaId by remember { mutableStateOf<Long?>(null) }
     var selectedTarjeta by remember { mutableStateOf<TarjetaEntity?>(null) }
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var selectedPeriodoResumen by remember { mutableStateOf<YearMonth?>(null) }
     var selectedTime by remember { mutableStateOf<LocalTime?>(null) }
     var selectedDescuento by remember { mutableStateOf<DescuentoEntity?>(null) }
+    var selectedPresupuestoId by remember { mutableStateOf<Long?>(null) }
 
     val filteredDescuentos = remember(selectedTarjeta, descuentos) {
         selectedTarjeta?.let { tarjeta ->
             descuentos.filter { it.tarjetasAplicables.contains(tarjeta.id) }
         } ?: emptyList()
+    }
+    val presupuestosDeGasto = remember(presupuestos) {
+        presupuestos.filter { it.tipo == PresupuestoEntity.TIPO_GASTO }
     }
     var descripcion by remember { mutableStateOf("") }
     var esCuotas by remember { mutableStateOf(false) }
@@ -94,6 +103,7 @@ fun NewMovementScreen(
     var showTimePicker by remember { mutableStateOf(false) }
     var showTarjetaDropdown by remember { mutableStateOf(false) }
     var showDescuentoDropdown by remember { mutableStateOf(false) }
+    var showPresupuestoDropdown by remember { mutableStateOf(false) }
 
     val ahorroEstimado = remember(amount, selectedDescuento, movimientos, selectedDate) {
         val amountDouble = amount.toDoubleOrNull() ?: 0.0
@@ -170,6 +180,7 @@ fun NewMovementScreen(
                     }
                 selectedTime = mov.hora?.let { LocalTime.ofNanoOfDay(it * 1_000_000) }
                 selectedDescuento = descuentos.find { it.id == mov.descuentoId }
+                selectedPresupuestoId = mov.presupuestoId
                 esCuotas = mov.esCuotas
                 cantidadCuotas = mov.cantidadCuotas
                 isLoaded = true
@@ -197,6 +208,7 @@ fun NewMovementScreen(
                     datePickerState.selectedDateMillis?.let {
                         selectedDate = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
                         selectedPeriodoResumen = null
+                        selectedPresupuestoId = null
                     }
                     showDatePicker = false
                 }) {
@@ -514,6 +526,79 @@ fun NewMovementScreen(
             }
 
             Text(
+                text = "DESCRIPCIÓN", 
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                style = MaterialTheme.typography.labelSmall, 
+                fontWeight = FontWeight.Bold, 
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = descripcion,
+                onValueChange = { descripcion = it },
+                placeholder = { Text("Ej: Cena con amigos", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                singleLine = true,
+                maxLines = 1,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onBackground
+                )
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            if (selectedTipo == TipoMovimiento.GASTO) {
+                Text(
+                    text = "PRESUPUESTO",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    CustomDropdownSelector(
+                        text = allPresupuestos.find { it.id == selectedPresupuestoId }?.titulo
+                            ?: "Sin presupuesto",
+                        icon = Icons.Default.AccountBalance,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        showPresupuestoDropdown = true
+                    }
+                    DropdownMenu(
+                        expanded = showPresupuestoDropdown,
+                        onDismissRequest = { showPresupuestoDropdown = false },
+                        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Sin presupuesto") },
+                            onClick = {
+                                selectedPresupuestoId = null
+                                showPresupuestoDropdown = false
+                            }
+                        )
+                        presupuestosDeGasto.forEach { presupuesto ->
+                            DropdownMenuItem(
+                                text = { Text(presupuesto.titulo) },
+                                onClick = {
+                                    selectedPresupuestoId = presupuesto.id
+                                    showPresupuestoDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            Text(
                 text = "APLICAR DESCUENTO", 
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
                 style = MaterialTheme.typography.labelSmall, 
@@ -557,35 +642,6 @@ fun NewMovementScreen(
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "DESCRIPCIÓN", 
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
-                style = MaterialTheme.typography.labelSmall, 
-                fontWeight = FontWeight.Bold, 
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
-                value = descripcion,
-                onValueChange = { descripcion = it },
-                placeholder = { Text("Ej: Cena con amigos", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-                maxLines = 1,
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    unfocusedBorderColor = Color.Transparent,
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -805,6 +861,7 @@ fun NewMovementScreen(
                                 categoriaId = catId,
                                 tarjetaId = tarjetaId,
                                 descuentoId = selectedDescuento?.id,
+                                presupuestoId = selectedPresupuestoId.takeIf { selectedTipo == TipoMovimiento.GASTO },
                                 montoReintegrable = ahorroEstimado,
                                 montoReintegrado = false,
                                 hora = selectedTime?.toNanoOfDay()?.div(1_000_000),

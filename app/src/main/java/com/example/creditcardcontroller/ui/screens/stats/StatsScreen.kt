@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.creditcardcontroller.data.local.AppDatabase
 import com.example.creditcardcontroller.data.local.TipoMovimiento
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
@@ -44,6 +45,7 @@ fun StatsScreen(modifier: Modifier = Modifier) {
     val movimientos by db.movimientoDao().getAllMovements().collectAsState(initial = emptyList())
     val categorias by db.categoriaDao().getAllCategorias().collectAsState(initial = emptyList())
     val tarjetas by db.tarjetaDao().getAllTarjetas().collectAsState(initial = emptyList())
+    val presupuestos by db.presupuestoDao().getAllItems().collectAsState(initial = emptyList())
 
     var selectedDate by remember { mutableStateOf(YearMonth.now()) }
     var showMonthPicker by remember { mutableStateOf(false) }
@@ -130,6 +132,7 @@ fun StatsScreen(modifier: Modifier = Modifier) {
                     items(filteredMovements) { movimiento ->
                         val categoria = categorias.find { it.id == movimiento.categoriaId }
                         val tarjeta = tarjetas.find { it.id == movimiento.tarjetaId }
+                        val presupuesto = presupuestos.find { it.id == movimiento.presupuestoId }
                         
                         MovementItem(
                             movimiento = movimiento,
@@ -137,6 +140,7 @@ fun StatsScreen(modifier: Modifier = Modifier) {
                             categoriaIcon = iconoDeCategoria(categoria?.icono ?: ""),
                             categoriaColor = colorDeCategoria(categoria?.color ?: "#808080"),
                             tarjetaName = tarjeta?.nombre ?: "Sin tarjeta",
+                            presupuestoName = presupuesto?.titulo,
                             onDelete = {
                                 movementToDelete = movimiento
                             }
@@ -217,6 +221,7 @@ fun MovementItem(
     categoriaIcon: androidx.compose.ui.graphics.vector.ImageVector,
     categoriaColor: Color,
     tarjetaName: String,
+    presupuestoName: String? = null,
     onDelete: () -> Unit
 ) {
     Card(
@@ -267,6 +272,21 @@ fun MovementItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (movimiento.tipo == TipoMovimiento.GASTO && !presupuestoName.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = presupuestoName.uppercase(),
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontSize = 8.sp
+                            )
+                        }
+                    }
                 }
             }
 

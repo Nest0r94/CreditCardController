@@ -224,7 +224,13 @@ fun MovementsFilter(tarjetas: List<TarjetaEntity>, selectedId: Long?, onSelect: 
 }
 
 @Composable
-fun MovementItem(movimiento: MovimientoEntity, categoria: CategoriaEntity?, tarjetaNombre: String, onClick: () -> Unit = {}) {
+fun MovementItem(
+    movimiento: MovimientoEntity,
+    categoria: CategoriaEntity?,
+    tarjetaNombre: String,
+    presupuestoNombre: String? = null,
+    onClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -270,6 +276,21 @@ fun MovementItem(movimiento: MovimientoEntity, categoria: CategoriaEntity?, tarj
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 8.sp
                     )
+                }
+                if (movimiento.tipo == TipoMovimiento.GASTO && !presupuestoNombre.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            presupuestoNombre.uppercase(),
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            fontSize = 8.sp
+                        )
+                    }
                 }
             }
         }

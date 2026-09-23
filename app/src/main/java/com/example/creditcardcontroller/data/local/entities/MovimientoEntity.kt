@@ -49,6 +49,8 @@ data class MovimientoEntity(
     val categoriaId: Long,
     val tarjetaId: Long,
     val descuentoId: Long?,
+    /** Ítem de presupuesto de gasto al que pertenece. Es nulo si no fue presupuestado. */
+    val presupuestoId: Long? = null,
     val montoReintegrable: Double,
     val montoReintegrado: Boolean,
     val hora: Long? = null,

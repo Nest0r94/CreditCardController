@@ -187,10 +187,12 @@ fun BalancesScreen(
                     state.movimientos.forEach { movimiento ->
                         val categoria = state.categorias.find { it.id == movimiento.categoriaId }
                         val tarjeta = state.tarjetasFiltro.find { it.id == movimiento.tarjetaId }
+                        val presupuesto = state.presupuestos.find { it.id == movimiento.presupuestoId }
                         MovementItem(
                             movimiento = movimiento,
                             categoria = categoria,
                             tarjetaNombre = tarjeta?.nombre ?: "Desconocida",
+                            presupuestoNombre = presupuesto?.titulo,
                             onClick = { onMovementClick(movimiento.id) }
                         )
                     }
