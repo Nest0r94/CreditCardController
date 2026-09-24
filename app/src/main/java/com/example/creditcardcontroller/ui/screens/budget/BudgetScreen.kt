@@ -55,7 +55,8 @@ fun BudgetScreen(
     viewModel: BudgetViewModel = viewModel(
         factory = BudgetViewModel.Factory(
             AppDatabase.getDatabase(LocalContext.current).presupuestoDao(),
-            AppDatabase.getDatabase(LocalContext.current).tarjetaDao()
+            AppDatabase.getDatabase(LocalContext.current).tarjetaDao(),
+            AppDatabase.getDatabase(LocalContext.current).movimientoDao()
         )
     )
 ) {
@@ -135,8 +136,12 @@ fun BudgetScreen(
             }
 
             items(uiState.limites) { limite ->
+                val isUnPago = limite.titulo.contains("1 cuota", ignoreCase = true) || limite.titulo.contains("1 pago", ignoreCase = true)
+                val activeAmount = if (isUnPago) uiState.gastoUnPago else uiState.gastoCuotas
                 BudgetItemRow(
                     item = limite.toBudgetItemData(),
+                    showProgressBar = true,
+                    currentAmount = activeAmount,
                     onEditClick = { editingItem = limite }
                 )
             }

@@ -4,10 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.creditcardcontroller.data.local.TipoMedioPago
+import com.example.creditcardcontroller.data.local.TipoMovimiento
+import com.example.creditcardcontroller.data.local.dao.MovimientoDao
 import com.example.creditcardcontroller.data.local.dao.PresupuestoDao
 import com.example.creditcardcontroller.data.local.dao.TarjetaDao
+import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
 import com.example.creditcardcontroller.data.local.entities.PresupuestoEntity
 import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
+import com.example.creditcardcontroller.ui.util.periodoVencimientoResumen
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,7 +23,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.time.Instant
 import java.time.YearMonth
+import java.time.ZoneId
 
 data class BudgetUiState(
     val incomes: List<PresupuestoEntity> = emptyList(),
@@ -29,12 +35,15 @@ data class BudgetUiState(
     val tarjetas: List<TarjetaEntity> = emptyList(),
     val totalIncome: Double = 0.0,
     val gastosChip: Double = 0.0,
-    val ahorroChip: Double = 0.0
+    val ahorroChip: Double = 0.0,
+    val gastoUnPago: Double = 0.0,
+    val gastoCuotas: Double = 0.0
 )
 
 class BudgetViewModel(
     private val presupuestoDao: PresupuestoDao,
-    private val tarjetaDao: TarjetaDao
+    private val tarjetaDao: TarjetaDao,
+    private val movimientoDao: MovimientoDao
 ) : ViewModel() {
 
     companion object {
@@ -46,6 +55,7 @@ class BudgetViewModel(
     val selectedDate: StateFlow<YearMonth> = _selectedDate
 
     private val tarjetas = tarjetaDao.getAllTarjetas()
+    private val movimientos = movimientoDao.getAllMovements()
 
     val availableMonths: StateFlow<List<YearMonth>> = presupuestoDao.getAvailableMonths()
         .map { tuples -> tuples.map { YearMonth.of(it.anio, it.mes) } }
@@ -82,10 +92,12 @@ class BudgetViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<BudgetUiState> = combine(
         flatMapLatestImpl(),
-        tarjetas
-    ) { items, tarjetas ->
+        tarjetas,
+        movimientos,
+        _selectedDate
+    ) { items, tarjetas, movimientos, selectedDate ->
         if (items.isEmpty()) {
-            initializeMonth(_selectedDate.value)
+            initializeMonth(selectedDate)
         }
         val incomes = items.filter { it.tipo == PresupuestoEntity.TIPO_INGRESO }
         val gastos = items.filter { it.tipo == PresupuestoEntity.TIPO_GASTO }
@@ -94,6 +106,27 @@ class BudgetViewModel(
 
         val totalIncome = incomes.sumOf { it.monto }
         val totalLimite = limites.sumOf { it.monto }
+
+        // Gastos por tarjeta de crédito para el mes seleccionado (resumen)
+        val tarjetasById = tarjetas.associateBy { it.id }
+
+        fun mesEfectivo(m: MovimientoEntity): YearMonth {
+            val tarjeta = tarjetasById[m.tarjetaId]
+            return if (tarjeta?.tipo == TipoMedioPago.CREDITO && tarjeta.diaCierreResumen != null) {
+                periodoVencimientoResumen(m.fechaPresentacion, tarjeta.diaCierreResumen)
+            } else {
+                YearMonth.from(Instant.ofEpochMilli(m.fechaPresentacion).atZone(ZoneId.systemDefault()).toLocalDate())
+            }
+        }
+
+        val movimientosMes = movimientos.filter { m ->
+            val tarjeta = tarjetasById[m.tarjetaId]
+            tarjeta?.tipo == TipoMedioPago.CREDITO && mesEfectivo(m) == selectedDate
+        }
+
+        val gastoUnPago = movimientosMes.filter { !it.esCuotas && it.tipo == TipoMovimiento.GASTO }.sumOf { it.monto }
+        val gastoCuotas = movimientosMes.filter { it.esCuotas && it.tipo == TipoMovimiento.GASTO }.sumOf { it.monto }
+
         // Los gastos con tarjeta de crédito ya están contados en los límites. 
         // Los gastos en cuenta o con tarjeta de débito se suman aparte.
         val gastosCuenta = gastos.sumOf { item ->
@@ -117,7 +150,9 @@ class BudgetViewModel(
             tarjetas = tarjetas,
             totalIncome = totalIncome,
             gastosChip = gastosChip,
-            ahorroChip = ahorroChip
+            ahorroChip = ahorroChip,
+            gastoUnPago = gastoUnPago,
+            gastoCuotas = gastoCuotas
         )
     }.stateIn(
         scope = viewModelScope,
@@ -222,12 +257,17 @@ class BudgetViewModel(
 
     class Factory(
         private val presupuestoDao: PresupuestoDao,
-        private val tarjetaDao: TarjetaDao
+        private val tarjetaDao: TarjetaDao,
+        private val movimientoDao: MovimientoDao
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(BudgetViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return BudgetViewModel(presupuestoDao, tarjetaDao) as T
+                return BudgetViewModel(
+                    presupuestoDao = presupuestoDao,
+                    tarjetaDao = tarjetaDao,
+                    movimientoDao = movimientoDao
+                ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

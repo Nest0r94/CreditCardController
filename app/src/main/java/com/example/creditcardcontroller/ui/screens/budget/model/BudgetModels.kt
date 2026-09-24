@@ -12,6 +12,7 @@ data class BudgetItemData(
     val title: String,
     val subtitle: String? = null,
     val amount: Double,
+    val currentAmount: Double = 0.0,
     val icon: ImageVector,
     val iconBackground: Color
 )
