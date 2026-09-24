@@ -67,7 +67,7 @@ fun BudgetScreen(
     var showMonthPicker by remember { mutableStateOf(false) }
     var showYearPicker by remember { mutableStateOf(false) }
 
-    var selectedTab by remember { mutableStateOf(tabs.first()) }
+    var selectedTab by remember { mutableStateOf(PresupuestoEntity.TIPO_GASTO) }
     var showAddDialog by remember { mutableStateOf(false) }
     var editingItem by remember { mutableStateOf<PresupuestoEntity?>(null) }
 
