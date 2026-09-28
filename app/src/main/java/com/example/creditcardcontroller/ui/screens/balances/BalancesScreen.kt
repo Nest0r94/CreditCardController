@@ -66,8 +66,7 @@ fun BalancesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 20.dp),
-            contentPadding = PaddingValues(bottom = 24.dp, top = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            contentPadding = PaddingValues(bottom = 24.dp, top = 16.dp)
         ) {
             item {
                 DateHeader(
@@ -79,6 +78,7 @@ fun BalancesScreen(
                     prevEnabled = state.canGoPrev,
                     nextEnabled = state.canGoNext
                 )
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
             item {
@@ -90,6 +90,7 @@ fun BalancesScreen(
                     limiteCuotas = state.limiteCuotas,
                     limiteUnPago = state.limiteUnPago
                 )
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
             item {
@@ -124,6 +125,7 @@ fun BalancesScreen(
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
             item {
@@ -154,6 +156,7 @@ fun BalancesScreen(
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
             item {
@@ -190,20 +193,20 @@ fun BalancesScreen(
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    
-                    state.movimientos.forEach { movimiento ->
-                        val categoria = state.categorias.find { it.id == movimiento.categoriaId }
-                        val tarjeta = state.tarjetasFiltro.find { it.id == movimiento.tarjetaId }
-                        val presupuesto = state.presupuestos.find { it.id == movimiento.presupuestoId }
-                        MovementItem(
-                            movimiento = movimiento,
-                            categoria = categoria,
-                            tarjetaNombre = tarjeta?.nombre ?: "Desconocida",
-                            presupuestoNombre = presupuesto?.titulo,
-                            onClick = { onMovementClick(movimiento.id) }
-                        )
-                    }
                 }
+            }
+
+            items(
+                items = state.movimientos,
+                key = { it.movimiento.id }
+            ) { item ->
+                MovementItem(
+                    movimiento = item.movimiento,
+                    categoria = item.categoria,
+                    tarjetaNombre = item.tarjetaNombre,
+                    presupuestoNombre = item.presupuestoNombre,
+                    onClick = { onMovementClick(item.movimiento.id) }
+                )
             }
         }
 

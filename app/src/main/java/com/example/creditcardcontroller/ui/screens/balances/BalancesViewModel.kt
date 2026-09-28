@@ -19,21 +19,30 @@ import com.example.creditcardcontroller.ui.screens.balances.comp.ChartItem
 import com.example.creditcardcontroller.ui.util.periodoVencimientoResumen
 import com.example.creditcardcontroller.ui.composables.categories.colorDeCategoria
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import java.time.Instant
 import java.time.YearMonth
 import java.time.ZoneId
 import kotlin.math.abs
 
+data class MovimientoUiItem(
+    val movimiento: MovimientoEntity,
+    val categoria: CategoriaEntity?,
+    val tarjetaNombre: String,
+    val presupuestoNombre: String?
+)
+
 data class BalancesUiState(
     val tarjetas: List<TarjetaEntity> = emptyList(),
     val consumoPorTarjeta: Map<Long, Double> = emptyMap(),
     val tarjetasFiltro: List<TarjetaEntity> = emptyList(),
-    val movimientos: List<MovimientoEntity> = emptyList(),
+    val movimientos: List<MovimientoUiItem> = emptyList(),
     val categorias: List<CategoriaEntity> = emptyList(),
     val presupuestos: List<PresupuestoEntity> = emptyList(),
     val selectedTarjetaId: Long? = null,
@@ -191,11 +200,23 @@ class BalancesViewModel(
                 )
             }.sortedByDescending { it.amount }
 
+        val categoriasById = categorias.associateBy { it.id }
+        val presupuestosById = presupuestos.associateBy { it.id }
+
+        val movimientoUiItems = filteredMovimientos.map { m ->
+            MovimientoUiItem(
+                movimiento = m,
+                categoria = categoriasById[m.categoriaId],
+                tarjetaNombre = tarjetasById[m.tarjetaId]?.nombre ?: "Desconocida",
+                presupuestoNombre = presupuestosById[m.presupuestoId]?.titulo
+            )
+        }
+
         BalancesUiState(
             tarjetas = tarjetasCredito,
             consumoPorTarjeta = consumoPorTarjeta,
             tarjetasFiltro = allTarjetas,
-            movimientos = filteredMovimientos,
+            movimientos = movimientoUiItems,
             categorias = categorias,
             presupuestos = presupuestos,
             selectedTarjetaId = selectedId,
@@ -213,7 +234,7 @@ class BalancesViewModel(
             categoryExpenses = categoryChartItems,
             paymentMethodExpenses = cardChartItems
         )
-    }.stateIn(
+    }.flowOn(Dispatchers.Default).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = BalancesUiState()

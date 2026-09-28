@@ -9,6 +9,8 @@ import com.example.creditcardcontroller.data.local.entities.TarjetaEntity
 import com.example.creditcardcontroller.ui.util.fechaDesdeDia
 import com.example.creditcardcontroller.ui.util.periodoDe
 import com.example.creditcardcontroller.ui.util.periodoVencimientoResumen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -17,17 +19,17 @@ import java.time.ZoneOffset
 
 class ResumenGenerator(private val db: AppDatabase) {
 
-    suspend fun generarResumenesPendientes() {
+    suspend fun generarResumenesPendientes() = withContext(Dispatchers.IO) {
         db.tarjetaDao().getAllSync()
             .filter { it.tipo == TipoMedioPago.CREDITO && esElegible(it) }
             .forEach { generarParaTarjeta(it) }
     }
 
-    suspend fun recalcular(tarjetaId: Long) {
-        val tarjeta = db.tarjetaDao().getById(tarjetaId) ?: return
+    suspend fun recalcular(tarjetaId: Long) = withContext(Dispatchers.IO) {
+        val tarjeta = db.tarjetaDao().getById(tarjetaId) ?: return@withContext
         if (tarjeta.tipo != TipoMedioPago.CREDITO || !esElegible(tarjeta)) {
             db.resumenDao().deleteByTarjeta(tarjetaId)
-            return
+            return@withContext
         }
         generarParaTarjeta(tarjeta)
     }
