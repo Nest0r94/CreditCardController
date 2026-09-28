@@ -37,6 +37,7 @@ data class BalancesUiState(
     val categorias: List<CategoriaEntity> = emptyList(),
     val presupuestos: List<PresupuestoEntity> = emptyList(),
     val selectedTarjetaId: Long? = null,
+    val selectedEsCuotas: Boolean? = null,
     val selectedDate: YearMonth = YearMonth.now(),
     val availableMonths: List<YearMonth> = emptyList(),
     val canGoPrev: Boolean = false,
@@ -68,6 +69,7 @@ class BalancesViewModel(
 ) : ViewModel() {
 
     private val _selectedTarjetaId = MutableStateFlow<Long?>(null)
+    private val _selectedEsCuotas = MutableStateFlow<Boolean?>(null)
     private val _selectedDate = MutableStateFlow<YearMonth?>(null)
 
     val uiState: StateFlow<BalancesUiState> = combine(
@@ -81,8 +83,9 @@ class BalancesViewModel(
             BalancesData(tarjetas, movimientos, categorias, presupuestos, resumenes)
         },
         _selectedTarjetaId,
+        _selectedEsCuotas,
         _selectedDate
-    ) { data, selectedId, requestedDate ->
+    ) { data, selectedId, selectedEsCuotas, requestedDate ->
         val allTarjetas = data.tarjetas
         val movimientos = data.movimientos
         val categorias = data.categorias
@@ -142,10 +145,14 @@ class BalancesViewModel(
             it.tipo == PresupuestoEntity.TIPO_LIMITE && it.titulo.contains("mensual", ignoreCase = true)
         }?.monto ?: 0.0
 
-        val filteredMovimientos = if (selectedId == null) {
+        var filteredMovimientos = if (selectedId == null) {
             movimientosMes
         } else {
             movimientosMes.filter { it.tarjetaId == selectedId }
+        }
+
+        if (selectedEsCuotas != null) {
+            filteredMovimientos = filteredMovimientos.filter { it.esCuotas == selectedEsCuotas }
         }
 
         val consumoPorTarjeta = data.resumenes
@@ -192,6 +199,7 @@ class BalancesViewModel(
             categorias = categorias,
             presupuestos = presupuestos,
             selectedTarjetaId = selectedId,
+            selectedEsCuotas = selectedEsCuotas,
             selectedDate = selectedDate,
             availableMonths = availableMonths,
             canGoPrev = selectedIndex > 0,
@@ -213,6 +221,10 @@ class BalancesViewModel(
 
     fun selectTarjeta(id: Long?) {
         _selectedTarjetaId.value = id
+    }
+
+    fun selectEsCuotas(esCuotas: Boolean?) {
+        _selectedEsCuotas.value = esCuotas
     }
 
     fun selectPrevMonth() = moveBy(-1)

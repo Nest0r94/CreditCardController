@@ -224,6 +224,43 @@ fun MovementsFilter(tarjetas: List<TarjetaEntity>, selectedId: Long?, onSelect: 
 }
 
 @Composable
+fun PaymentTypeFilter(
+    selectedEsCuotas: Boolean?,
+    onSelect: (Boolean?) -> Unit
+) {
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 0.dp)
+    ) {
+        item {
+            FilterChip(
+                selected = selectedEsCuotas == null,
+                onClick = { onSelect(null) },
+                label = { Text("TODOS") },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFFC2C1FF),
+                    selectedLabelColor = Color(0xFF1A09A1)
+                )
+            )
+        }
+        item {
+            FilterChip(
+                selected = selectedEsCuotas == false,
+                onClick = { onSelect(if (selectedEsCuotas == false) null else false) },
+                label = { Text("1 PAGO") }
+            )
+        }
+        item {
+            FilterChip(
+                selected = selectedEsCuotas == true,
+                onClick = { onSelect(if (selectedEsCuotas == true) null else true) },
+                label = { Text("CUOTAS") }
+            )
+        }
+    }
+}
+
+@Composable
 fun MovementItem(
     movimiento: MovimientoEntity,
     categoria: CategoriaEntity?,

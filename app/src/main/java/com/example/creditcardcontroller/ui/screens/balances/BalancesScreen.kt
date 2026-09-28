@@ -183,6 +183,13 @@ fun BalancesScreen(
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
+
+                    PaymentTypeFilter(
+                        selectedEsCuotas = state.selectedEsCuotas,
+                        onSelect = viewModel::selectEsCuotas
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
                     
                     state.movimientos.forEach { movimiento ->
                         val categoria = state.categorias.find { it.id == movimiento.categoriaId }
