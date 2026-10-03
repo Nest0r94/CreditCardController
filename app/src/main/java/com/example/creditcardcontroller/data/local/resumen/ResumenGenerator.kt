@@ -71,7 +71,9 @@ class ResumenGenerator(private val db: AppDatabase) {
         var periodo = primerPeriodo
         while (!periodo.isAfter(ultimoPeriodo)) {
             upsert(tarjeta.id, periodo, diaCierre, diaVencimiento, movimientos, existentes[periodoDe(periodo)])
-            inicializarPresupuestoSiNoExiste(periodo)
+            if (!periodo.isAfter(hoy)) {
+                inicializarPresupuestoSiNoExiste(periodo)
+            }
             periodo = periodo.plusMonths(1)
         }
 
