@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.example.creditcardcontroller.data.local.AppDatabase
 import com.example.creditcardcontroller.data.local.Frecuencia
 import com.example.creditcardcontroller.data.local.TipoDescuento
+import com.example.creditcardcontroller.data.local.TipoMovimiento
 import com.example.creditcardcontroller.data.local.entities.CategoriaEntity
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
 import com.example.creditcardcontroller.data.local.entities.MovimientoEntity
@@ -333,7 +334,7 @@ private fun DescuentoEntity.toPromoData(
 
     val periodo = periodoDeFrecuencia(frecuencia, LocalDate.now())
     val used = movimientos
-        .filter { it.descuentoId == this.id }
+        .filter { it.descuentoId == this.id && it.tipo != TipoMovimiento.REINTEGRO }
         .filter {
             Instant.ofEpochMilli(it.fecha).atZone(ZoneId.systemDefault()).toLocalDate() in periodo
         }

@@ -118,7 +118,7 @@ fun NewMovementScreen(
 
                 val currentPeriodMovements = movimientos.filter { mov ->
                     val movDate = Instant.ofEpochMilli(mov.fecha).atZone(ZoneId.systemDefault()).toLocalDate()
-                    mov.descuentoId == descuento.id && movDate in periodo
+                    mov.descuentoId == descuento.id && mov.tipo != TipoMovimiento.REINTEGRO && movDate in periodo
                 }
                 
                 val usedAhorro = currentPeriodMovements.sumOf { it.montoReintegrable }
@@ -902,9 +902,9 @@ fun NewMovementScreen(
                                         fechaPresentacion = fechaPresentacion,
                                         categoriaId = catId,
                                         tarjetaId = targetTarjetaId,
-                                        descuentoId = descuentoElegido.id,
+                                        descuentoId = null,
                                         presupuestoId = null,
-                                        montoReintegrable = ahorroEstimado,
+                                        montoReintegrable = 0.0,
                                         montoReintegrado = false,
                                         hora = selectedTime?.toNanoOfDay()?.div(1_000_000),
                                         tipo = TipoMovimiento.REINTEGRO,
