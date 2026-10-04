@@ -8,14 +8,21 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.creditcardcontroller.data.local.TipoMovimiento
@@ -47,10 +54,13 @@ fun SummaryCard(
     val progress = rawProgress.coerceIn(0f, 1f)
     val mainColor = getProgressColor(rawProgress)
     
+    val totalGastoTarjeta = gastoCuotas + gastoUnPago
+    val limiteTotalTarjeta = limiteCuotas + limiteUnPago
+    val totalRatio = if (limiteTotalTarjeta > 0) (totalGastoTarjeta / limiteTotalTarjeta).toFloat() else 0f
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(210.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(
                 Brush.verticalGradient(
@@ -58,92 +68,123 @@ fun SummaryCard(
                 )
             )
     ) {
-        Row(
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .fillMaxWidth()
+                .padding(24.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "PERÍODO ACTUAL",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = formatCurrency(gastoActual),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "de un presupuesto de ${formatCurrency(presupuesto)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.8f)
-                )
-                
-                Spacer(modifier = Modifier.weight(1f))
-                
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    val cuotasRatio = if (limiteCuotas > 0) (gastoCuotas / limiteCuotas).toFloat() else 0f
-                    val unPagoRatio = if (limiteUnPago > 0) (gastoUnPago / limiteUnPago).toFloat() else 0f
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "PERÍODO ACTUAL",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = formatCurrency(gastoActual),
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "de un presupuesto de ${formatCurrency(presupuesto)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        val cuotasRatio = if (limiteCuotas > 0) (gastoCuotas / limiteCuotas).toFloat() else 0f
+                        val unPagoRatio = if (limiteUnPago > 0) (gastoUnPago / limiteUnPago).toFloat() else 0f
 
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "GASTO EN UN PAGO",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontWeight = FontWeight.Bold
-                        )
-                        LimitProgressBar(
-                            progress = unPagoRatio,
-                            leftLabel = formatCurrency(gastoUnPago),
-                            bottomLabel = "TOTAL ${formatCurrency(limiteUnPago)}",
-                            modifier = Modifier.fillMaxWidth(),
-                            labelColor = Color.White,
-                            trackColor = Color.White.copy(alpha = 0.2f),
-                            barHeight = 6.dp
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.width(16.dp))
-                    
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "GASTO EN CUOTAS",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontWeight = FontWeight.Bold
-                        )
-                        LimitProgressBar(
-                            progress = cuotasRatio,
-                            leftLabel = formatCurrency(gastoCuotas),
-                            bottomLabel = "TOTAL ${formatCurrency(limiteCuotas)}",
-                            modifier = Modifier.fillMaxWidth(),
-                            labelColor = Color.White,
-                            trackColor = Color.White.copy(alpha = 0.2f),
-                            barHeight = 6.dp
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "GASTO EN UN PAGO",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Bold
+                            )
+                            LimitProgressBar(
+                                progress = unPagoRatio,
+                                leftLabel = formatCurrency(gastoUnPago),
+                                bottomLabel = "TOTAL ${formatCurrency(limiteUnPago)}",
+                                modifier = Modifier.fillMaxWidth(),
+                                labelColor = Color.White,
+                                trackColor = Color.White.copy(alpha = 0.2f),
+                                barHeight = 6.dp
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "GASTO EN CUOTAS",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Bold
+                            )
+                            LimitProgressBar(
+                                progress = cuotasRatio,
+                                leftLabel = formatCurrency(gastoCuotas),
+                                bottomLabel = "TOTAL ${formatCurrency(limiteCuotas)}",
+                                modifier = Modifier.fillMaxWidth(),
+                                labelColor = Color.White,
+                                trackColor = Color.White.copy(alpha = 0.2f),
+                                barHeight = 6.dp
+                            )
+                        }
                     }
                 }
+                
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(80.dp).padding(top = 8.dp)) {
+                    CircularProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier.fillMaxSize(),
+                        color = mainColor,
+                        strokeWidth = 8.dp,
+                        trackColor = Color.White.copy(alpha = 0.2f),
+                        strokeCap = StrokeCap.Round
+                    )
+                    Text(
+                        text = "${(rawProgress * 100).toInt()}%",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
             }
-            
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(80.dp).padding(top = 8.dp)) {
-                CircularProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxSize(),
-                    color = mainColor,
-                    strokeWidth = 8.dp,
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            AutoResizedText(
+                text = "GASTO TOTAL TARJETA: ${formatCurrency(totalGastoTarjeta)} / ${formatCurrency(limiteTotalTarjeta)}",
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(modifier = Modifier.fillMaxWidth()) {
+                LinearProgressIndicator(
+                    progress = { totalRatio.coerceIn(0f, 1f) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(2.dp)),
+                    color = getProgressColor(totalRatio),
                     trackColor = Color.White.copy(alpha = 0.2f),
-                    strokeCap = StrokeCap.Round
+                    strokeCap = StrokeCap.Round,
+                    gapSize = 0.dp,
+                    drawStopIndicator = {}
                 )
-                Text(
-                    text = "${(rawProgress * 100).toInt()}%",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
+                Spacer(modifier = Modifier.width(96.dp))
             }
         }
     }
@@ -384,4 +425,41 @@ private fun getProgressColor(progress: Float): Color {
             fraction = progress
         )
     }
+}
+
+@Composable
+fun AutoResizedText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+    color: Color = Color.White,
+    maxFontSize: TextUnit = 11.sp,
+    minFontSize: TextUnit = 6.sp
+) {
+    var resizedFontSize by remember(text) { mutableStateOf(maxFontSize) }
+    var shouldDraw by remember(text) { mutableStateOf(false) }
+
+    Text(
+        text = text,
+        color = color,
+        modifier = modifier.drawWithContent {
+            if (shouldDraw) {
+                drawContent()
+            }
+        },
+        maxLines = 1,
+        softWrap = false,
+        style = style.copy(fontSize = resizedFontSize),
+        onTextLayout = { result ->
+            if (result.didOverflowWidth) {
+                if (resizedFontSize > minFontSize) {
+                    resizedFontSize = (resizedFontSize.value - 0.5f).sp
+                } else {
+                    shouldDraw = true
+                }
+            } else {
+                shouldDraw = true
+            }
+        }
+    )
 }

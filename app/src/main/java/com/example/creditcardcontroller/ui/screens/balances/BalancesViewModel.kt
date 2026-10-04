@@ -132,8 +132,12 @@ class BalancesViewModel(
                 TipoMovimiento.REINTEGRO -> 0.0
             }
         }
-        val gastoCuotas = movimientosMes.filter { it.esCuotas && it.tipo == TipoMovimiento.GASTO }.sumOf { it.monto }
-        val gastoUnPago = movimientosMes.filter { !it.esCuotas && it.tipo == TipoMovimiento.GASTO }.sumOf { it.monto }
+        val gastoCuotas = movimientosMes.filter { 
+            tarjetasById[it.tarjetaId]?.tipo == TipoMedioPago.CREDITO && it.esCuotas && it.tipo == TipoMovimiento.GASTO 
+        }.sumOf { it.monto }
+        val gastoUnPago = movimientosMes.filter { 
+            tarjetasById[it.tarjetaId]?.tipo == TipoMedioPago.CREDITO && !it.esCuotas && it.tipo == TipoMovimiento.GASTO 
+        }.sumOf { it.monto }
 
         val totalPresupuesto = presupuestos.filter {
             it.mes == selectedDate.monthValue &&
