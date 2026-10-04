@@ -15,7 +15,7 @@ fun expandirEnCuotas(movimiento: MovimientoEntity, diaCierre: Int?, cuotaInicial
         return listOf(movimiento.copy(numeroCuota = 0))
     }
 
-    val cuotaGroupId = UUID.randomUUID().toString()
+    val cuotaGroupId = movimiento.cuotaGroupId ?: UUID.randomUUID().toString()
     val montoBase = redondear(total / n)
     val diaOriginal = Instant.ofEpochMilli(movimiento.fechaPresentacion)
         .atZone(ZoneId.systemDefault())

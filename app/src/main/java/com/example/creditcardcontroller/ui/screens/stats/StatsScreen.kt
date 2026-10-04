@@ -64,7 +64,7 @@ fun StatsScreen(modifier: Modifier = Modifier) {
             when (it.tipo) {
                 TipoMovimiento.GASTO -> it.monto
                 TipoMovimiento.INGRESO -> -it.monto
-                TipoMovimiento.REINTEGRO -> 0.0
+                TipoMovimiento.REINTEGRO -> -it.monto
             }
         }
     }
@@ -294,7 +294,7 @@ fun MovementItem(
                 val sign = when (movimiento.tipo) {
                     TipoMovimiento.GASTO -> "-"
                     TipoMovimiento.INGRESO -> "+"
-                    TipoMovimiento.REINTEGRO -> ""
+                    TipoMovimiento.REINTEGRO -> "+"
                 }
                 val color = when (movimiento.tipo) {
                     TipoMovimiento.GASTO -> MaterialTheme.colorScheme.onSurface

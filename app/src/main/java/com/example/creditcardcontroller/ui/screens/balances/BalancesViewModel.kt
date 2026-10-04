@@ -129,7 +129,7 @@ class BalancesViewModel(
             when (it.tipo) {
                 TipoMovimiento.GASTO -> it.monto
                 TipoMovimiento.INGRESO -> -it.monto
-                TipoMovimiento.REINTEGRO -> 0.0
+                TipoMovimiento.REINTEGRO -> -it.monto
             }
         }
         val gastoCuotas = movimientosMes.filter { 

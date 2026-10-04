@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.creditcardcontroller.data.local.AppDatabase
 import com.example.creditcardcontroller.data.local.SettingsDataStore
+import com.example.creditcardcontroller.data.local.TipoDescuento
 import com.example.creditcardcontroller.data.local.TipoMedioPago
 import com.example.creditcardcontroller.data.local.TipoMovimiento
 import com.example.creditcardcontroller.data.local.entities.DescuentoEntity
@@ -50,6 +51,7 @@ import java.time.ZoneOffset
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -821,18 +823,14 @@ fun NewMovementScreen(
                     
                     if (catId != null && tarjetaId != null && amount.toDoubleOrNull() != null) {
                         scope.launch {
-                            val tarjetaOriginalId = if (movementId != null) {
-                                val original = db.movimientoDao().getById(movementId)
-                                if (original != null) {
-                                    if (original.cuotaGroupId != null) {
-                                        db.movimientoDao().deleteByGroupId(original.cuotaGroupId)
-                                    } else {
-                                        db.movimientoDao().delete(original)
-                                    }
+                            val original = if (movementId != null) db.movimientoDao().getById(movementId) else null
+                            val tarjetaOriginalId = original?.let {
+                                if (it.cuotaGroupId != null) {
+                                    db.movimientoDao().deleteByGroupId(it.cuotaGroupId)
+                                } else {
+                                    db.movimientoDao().delete(it)
                                 }
-                                original?.tarjetaId
-                            } else {
-                                null
+                                it.tarjetaId
                             }
 
                             val montoTotal = amount.toDoubleOrNull() ?: 0.0
@@ -850,6 +848,9 @@ fun NewMovementScreen(
                             } else {
                                 fechaCompraMillis
                             }
+
+                            val groupId = original?.cuotaGroupId ?: UUID.randomUUID().toString()
+
                             val movimiento = MovimientoEntity(
                                 descripcion = descripcion,
                                 monto = montoTotal,
@@ -865,14 +866,61 @@ fun NewMovementScreen(
                                 montoReintegrable = ahorroEstimado,
                                 montoReintegrado = false,
                                 hora = selectedTime?.toNanoOfDay()?.div(1_000_000),
-                                tipo = selectedTipo
+                                tipo = selectedTipo,
+                                cuotaGroupId = groupId
                             )
                             val movimientos = if (moverACuotas) {
                                 expandirEnCuotas(movimiento, selectedTarjeta?.diaCierreResumen, if (initialInstallmentEnabled) cuotaInicial else 1)
                             } else {
                                 listOf(movimiento)
                             }
-                            db.movimientoDao().insertAll(movimientos)
+
+                            val descuentoElegido = selectedDescuento
+                            val reintegroMovimiento = if (descuentoElegido != null && ahorroEstimado > 0.0 && selectedTipo == TipoMovimiento.GASTO) {
+                                val targetTarjetaId = when (descuentoElegido.tipoDescuento) {
+                                    TipoDescuento.REINTEGRO_TARJETA -> tarjetaId
+                                    TipoDescuento.REINTEGRO_CUENTA -> {
+                                        db.tarjetaDao().getAllSync().find { it.tipo == TipoMedioPago.CUENTA }?.id
+                                            ?: db.tarjetaDao().insert(
+                                                TarjetaEntity(
+                                                    nombre = "Cuenta",
+                                                    tipo = TipoMedioPago.CUENTA
+                                                )
+                                            )
+                                    }
+                                    TipoDescuento.EN_PAGO -> null
+                                }
+
+                                if (targetTarjetaId != null) {
+                                    MovimientoEntity(
+                                        descripcion = if (descripcion.isNotBlank()) "Reintegro: $descripcion" else "Reintegro ${descuentoElegido.nombre}",
+                                        monto = ahorroEstimado,
+                                        esCuotas = false,
+                                        cantidadCuotas = 1,
+                                        numeroCuota = 0,
+                                        fecha = fechaCompraMillis,
+                                        fechaPresentacion = fechaPresentacion,
+                                        categoriaId = catId,
+                                        tarjetaId = targetTarjetaId,
+                                        descuentoId = descuentoElegido.id,
+                                        presupuestoId = null,
+                                        montoReintegrable = ahorroEstimado,
+                                        montoReintegrado = false,
+                                        hora = selectedTime?.toNanoOfDay()?.div(1_000_000),
+                                        tipo = TipoMovimiento.REINTEGRO,
+                                        cuotaGroupId = groupId
+                                    )
+                                } else null
+                            } else null
+
+                            val listaFinalMovimientos = if (reintegroMovimiento != null) {
+                                movimientos + reintegroMovimiento
+                            } else {
+                                movimientos
+                            }
+
+                            db.movimientoDao().insertAll(listaFinalMovimientos)
+
                             if (tarjetaOriginalId != null && tarjetaOriginalId != tarjetaId) {
                                 com.example.creditcardcontroller.data.local.resumen.ResumenGenerator(db).recalcular(tarjetaOriginalId)
                             }

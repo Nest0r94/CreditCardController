@@ -381,7 +381,7 @@ fun MovementItem(
         val prefix = when (movimiento.tipo) {
             TipoMovimiento.GASTO -> "-"
             TipoMovimiento.INGRESO -> "+"
-            TipoMovimiento.REINTEGRO -> ""
+            TipoMovimiento.REINTEGRO -> "+"
         }
 
         Text(

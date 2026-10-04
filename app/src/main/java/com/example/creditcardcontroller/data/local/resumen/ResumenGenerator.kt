@@ -128,7 +128,7 @@ class ResumenGenerator(private val db: AppDatabase) {
                 when (m.tipo) {
                     TipoMovimiento.GASTO -> total += m.monto
                     TipoMovimiento.INGRESO -> total -= m.monto
-                    TipoMovimiento.REINTEGRO -> { /* Por ahora no suma ni resta según instrucción */ }
+                    TipoMovimiento.REINTEGRO -> total -= m.monto
                 }
             }
         }
