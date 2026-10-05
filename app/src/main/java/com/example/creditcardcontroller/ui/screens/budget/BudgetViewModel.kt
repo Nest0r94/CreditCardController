@@ -37,7 +37,8 @@ data class BudgetUiState(
     val gastosChip: Double = 0.0,
     val ahorroChip: Double = 0.0,
     val gastoUnPago: Double = 0.0,
-    val gastoCuotas: Double = 0.0
+    val gastoCuotas: Double = 0.0,
+    val expenseCurrentAmounts: Map<Long, Double> = emptyMap()
 )
 
 class BudgetViewModel(
@@ -120,12 +121,29 @@ class BudgetViewModel(
         }
 
         val movimientosMes = movimientos.filter { m ->
-            val tarjeta = tarjetasById[m.tarjetaId]
-            tarjeta?.tipo == TipoMedioPago.CREDITO && mesEfectivo(m) == selectedDate
+            mesEfectivo(m) == selectedDate
         }
 
-        val gastoUnPago = movimientosMes.filter { !it.esCuotas && it.tipo == TipoMovimiento.GASTO }.sumOf { it.monto }
-        val gastoCuotas = movimientosMes.filter { it.esCuotas && it.tipo == TipoMovimiento.GASTO }.sumOf { it.monto }
+        val movimientosMesCredito = movimientosMes.filter { m ->
+            val tarjeta = tarjetasById[m.tarjetaId]
+            tarjeta?.tipo == TipoMedioPago.CREDITO
+        }
+
+        val gastoUnPago = movimientosMesCredito.filter { !it.esCuotas && it.tipo == TipoMovimiento.GASTO }.sumOf { it.monto }
+        val gastoCuotas = movimientosMesCredito.filter { it.esCuotas && it.tipo == TipoMovimiento.GASTO }.sumOf { it.monto }
+
+        val expenseCurrentAmounts = gastos.associate { item ->
+            val spent = movimientosMes
+                .filter { it.presupuestoId == item.id }
+                .sumOf { 
+                    when (it.tipo) {
+                        TipoMovimiento.GASTO -> it.monto
+                        TipoMovimiento.REINTEGRO -> -it.monto
+                        TipoMovimiento.INGRESO -> -it.monto
+                    }
+                }
+            item.id to spent
+        }
 
         // Los gastos con tarjeta de crédito ya están contados en los límites. 
         // Los gastos en cuenta o con tarjeta de débito se suman aparte.
@@ -152,7 +170,8 @@ class BudgetViewModel(
             gastosChip = gastosChip,
             ahorroChip = ahorroChip,
             gastoUnPago = gastoUnPago,
-            gastoCuotas = gastoCuotas
+            gastoCuotas = gastoCuotas,
+            expenseCurrentAmounts = expenseCurrentAmounts
         )
     }.stateIn(
         scope = viewModelScope,

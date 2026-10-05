@@ -18,7 +18,8 @@ data class BudgetItemData(
 )
 
 fun PresupuestoEntity.toBudgetItemData(
-    tarjetaNombre: (Long?) -> String? = { null }
+    tarjetaNombre: (Long?) -> String? = { null },
+    currentAmount: Double = 0.0
 ) = BudgetItemData(
     id = id.toString(),
     title = titulo,
@@ -28,6 +29,7 @@ fun PresupuestoEntity.toBudgetItemData(
         null
     },
     amount = monto,
+    currentAmount = currentAmount,
     icon = iconoDeCategoria(icono),
     iconBackground = colorDeCategoria(color)
 )

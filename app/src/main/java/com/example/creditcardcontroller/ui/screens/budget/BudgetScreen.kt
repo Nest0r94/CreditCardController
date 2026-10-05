@@ -185,12 +185,16 @@ fun BudgetScreen(
 
             items(activeItems) { item ->
                 val isDisponible = item.titulo == BudgetViewModel.DISPONIBLE_TITULO
-                val data = item.toBudgetItemData(tarjetaNombre).let {
+                val isExpense = selectedTab == PresupuestoEntity.TIPO_GASTO
+                val currentAmount = if (isExpense) uiState.expenseCurrentAmounts[item.id] ?: 0.0 else 0.0
+                val data = item.toBudgetItemData(tarjetaNombre, currentAmount = currentAmount).let {
                     if (isDisponible) it.copy(subtitle = "Cálculo automático") else it
                 }
                 BudgetItemRow(
                     item = data,
                     editable = !isDisponible,
+                    showProgressBar = isExpense && !isDisponible,
+                    currentAmount = currentAmount,
                     onEditClick = { editingItem = item }
                 )
             }
