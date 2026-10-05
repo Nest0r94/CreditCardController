@@ -3,6 +3,8 @@ package com.example.creditcardcontroller.ui.screens.balances.comp
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -61,10 +63,13 @@ fun ExpensesChartCard(
                 Spacer(modifier = Modifier.width(16.dp))
                 
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(max = 120.dp)
+                        .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items.take(3).forEach { item ->
+                    items.forEach { item ->
                         ChartLegendItem(item)
                     }
                 }
