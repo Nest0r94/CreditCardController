@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -84,27 +86,31 @@ fun BudgetScreen(
     }
 
     FinancialSurface(modifier = modifier) {
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp, top = 8.dp)
+                .padding(horizontal = 20.dp)
         ) {
-            item {
-                DateHeader(
-                    selectedDate = selectedDate,
-                    onMonthClick = { showMonthPicker = true },
-                    onYearClick = { showYearPicker = true },
-                    onPreviousMonth = { viewModel.navigatePrevious() },
-                    onNextMonth = { viewModel.navigateNext() },
-                    prevEnabled = availableMonths.any { it.isBefore(selectedDate) },
-                    nextEnabled = availableMonths.any { it.isAfter(selectedDate) }
-                )
-            }
-
-            item {
-                BudgetSummarySection(
+            Spacer(modifier = Modifier.height(16.dp))
+            DateHeader(
+                selectedDate = selectedDate,
+                onMonthClick = { showMonthPicker = true },
+                onYearClick = { showYearPicker = true },
+                onPreviousMonth = { viewModel.navigatePrevious() },
+                onNextMonth = { viewModel.navigateNext() },
+                prevEnabled = availableMonths.any { it.isBefore(selectedDate) },
+                nextEnabled = availableMonths.any { it.isAfter(selectedDate) }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 24.dp, top = 0.dp)
+            ) {
+                item {
+                    BudgetSummarySection(
                     totalIncome = uiState.totalIncome,
                     gastosChip = uiState.gastosChip,
                     ahorroChip = uiState.ahorroChip
@@ -251,6 +257,7 @@ fun BudgetScreen(
                 editingItem = null
             }
         )
+    }
     }
 }
 

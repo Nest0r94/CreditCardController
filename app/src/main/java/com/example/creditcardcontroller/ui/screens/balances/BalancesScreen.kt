@@ -62,24 +62,28 @@ fun BalancesScreen(
     }
 
     FinancialSurface(modifier = modifier) {
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 20.dp),
-            contentPadding = PaddingValues(bottom = 24.dp, top = 16.dp)
+                .padding(horizontal = 20.dp)
         ) {
-            item {
-                DateHeader(
-                    selectedDate = state.selectedDate,
-                    onMonthClick = { showMonthPicker = true },
-                    onYearClick = { showYearPicker = true },
-                    onPreviousMonth = { viewModel.selectPrevMonth() },
-                    onNextMonth = { viewModel.selectNextMonth() },
-                    prevEnabled = state.canGoPrev,
-                    nextEnabled = state.canGoNext
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-            }
+            Spacer(modifier = Modifier.height(16.dp))
+            DateHeader(
+                selectedDate = state.selectedDate,
+                onMonthClick = { showMonthPicker = true },
+                onYearClick = { showYearPicker = true },
+                onPreviousMonth = { viewModel.selectPrevMonth() },
+                onNextMonth = { viewModel.selectNextMonth() },
+                prevEnabled = state.canGoPrev,
+                nextEnabled = state.canGoNext
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentPadding = PaddingValues(bottom = 24.dp, top = 0.dp)
+            ) {
 
             item {
                 SummaryCard(
@@ -209,6 +213,7 @@ fun BalancesScreen(
                 )
             }
         }
+    }
 
         if (showMonthPicker) {
             MonthPickerDialog(
